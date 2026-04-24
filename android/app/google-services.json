@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1051101578500",
+    "project_id": "pocketra-4f814",
+    "storage_bucket": "pocketra-4f814.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1051101578500:android:347aa78db3501663133c51",
+        "android_client_info": {
+          "package_name": "com.example.pocketra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_JoWcQC6Si2OWphoXJ_FINOQz84SMRoA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

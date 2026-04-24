@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketra/screens/auth/signup_screen.dart';
+import '../../services/auth_service.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +13,75 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_emailController.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return;
+    }
+    if (_passwordController.text.trim().isEmpty) {
+      _showError('Please enter your password');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGoogle();
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      }
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFF87171),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 hint: 'you@example.com',
                 icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
               ),
 
               const SizedBox(height: 20),
@@ -112,7 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {},
                   child: const Text(
                     'Forgot password?',
-                    style: TextStyle(color: Color(0xFF3DDB6F), fontSize: 13),
+                    style: TextStyle(
+                        color: Color(0xFF3DDB6F), fontSize: 13),
                   ),
                 ),
               ),
@@ -124,28 +196,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3DDB6F),
+                    disabledBackgroundColor: const Color(0xFF1A3A2A),
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Log In',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Log In',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, size: 18),
+                          ],
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 18),
-                    ],
-                  ),
                 ),
               ),
 
@@ -154,15 +236,18 @@ class _LoginScreenState extends State<LoginScreen> {
               // Divider
               Row(
                 children: [
-                  const Expanded(child: Divider(color: Color(0xFF2A3A2F))),
+                  const Expanded(
+                      child: Divider(color: Color(0xFF2A3A2F))),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'Or continue with',
-                      style: TextStyle(color: Color(0xFF6B7C75), fontSize: 13),
+                      style: TextStyle(
+                          color: Color(0xFF6B7C75), fontSize: 13),
                     ),
                   ),
-                  const Expanded(child: Divider(color: Color(0xFF2A3A2F))),
+                  const Expanded(
+                      child: Divider(color: Color(0xFF2A3A2F))),
                 ],
               ),
 
@@ -175,6 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _buildSocialButton(
                       icon: Icons.apple,
                       label: 'Apple',
+                      onPressed: () {},
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -182,6 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: _buildSocialButton(
                       icon: Icons.g_mobiledata,
                       label: 'Google',
+                      onPressed: _handleGoogleLogin,
                     ),
                   ),
                 ],
@@ -196,12 +283,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text(
                       'New to Pocketra? ',
-                      style: TextStyle(color: Color(0xFF6B7C75), fontSize: 14),
+                      style: TextStyle(
+                          color: Color(0xFF6B7C75), fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const SignupScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const SignupScreen()),
                       ),
                       child: const Text(
                         'Sign Up',
@@ -239,15 +328,18 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     bool obscure = false,
     Widget? suffix,
+    TextInputType? keyboardType,
   }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF4A5A50)),
-        prefixIcon: Icon(icon, color: const Color(0xFF6B7C75), size: 20),
+        prefixIcon:
+            Icon(icon, color: const Color(0xFF6B7C75), size: 20),
         suffixIcon: suffix,
         filled: true,
         fillColor: const Color(0xFF1A2A1F),
@@ -261,15 +353,20 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF3DDB6F), width: 1.5),
+          borderSide:
+              const BorderSide(color: Color(0xFF3DDB6F), width: 1.5),
         ),
       ),
     );
   }
 
-  Widget _buildSocialButton({required IconData icon, required String label}) {
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return OutlinedButton.icon(
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: 20),
       label: Text(
         label,
@@ -278,7 +375,8 @@ class _LoginScreenState extends State<LoginScreen> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
         side: const BorderSide(color: Color(0xFF2A3A2F)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
         backgroundColor: const Color(0xFF1A2A1F),
       ),
     );
