@@ -21,12 +21,10 @@ class PocketDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<PocketDetailScreen> createState() =>
-      _PocketDetailScreenState();
+  State<PocketDetailScreen> createState() => _PocketDetailScreenState();
 }
 
-class _PocketDetailScreenState
-    extends State<PocketDetailScreen> {
+class _PocketDetailScreenState extends State<PocketDetailScreen> {
   final _firestoreService = FirestoreService();
 
   // Shows bottom sheet to add a new expense
@@ -38,8 +36,7 @@ class _PocketDetailScreenState
       context: context,
       backgroundColor: const Color(0xFF1A2A1F),
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       isScrollControlled: true,
       builder: (context) => Padding(
@@ -47,14 +44,12 @@ class _PocketDetailScreenState
           left: 24,
           right: 24,
           top: 24,
-          bottom:
-              MediaQuery.of(context).viewInsets.bottom + 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Handle bar
             Center(
               child: Container(
@@ -68,39 +63,39 @@ class _PocketDetailScreenState
             ),
             const SizedBox(height: 20),
 
-            Text('Add Expense — ${widget.name}',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600)),
+            Text(
+              'Add Expense — ${widget.name}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+              ),
+            ),
             const SizedBox(height: 20),
 
             // Amount field
-            const Text('Amount',
-                style: TextStyle(
-                    color: Color(0xFFB0C4B8), fontSize: 13)),
+            const Text(
+              'Amount',
+              style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: amountController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 15),
-              decoration: _inputDecoration('0.00',
-                  prefix: '₱ '),
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+              decoration: _inputDecoration('0.00', prefix: '₱ '),
             ),
             const SizedBox(height: 16),
 
             // Note field
-            const Text('Note',
-                style: TextStyle(
-                    color: Color(0xFFB0C4B8), fontSize: 13)),
+            const Text(
+              'Note',
+              style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: noteController,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 15),
-              decoration: _inputDecoration(
-                  'e.g. Lunch, grab ride...'),
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+              decoration: _inputDecoration('e.g. Lunch, grab ride...'),
             ),
             const SizedBox(height: 24),
 
@@ -111,23 +106,18 @@ class _PocketDetailScreenState
               child: ElevatedButton(
                 onPressed: () async {
                   if (amountController.text.isNotEmpty) {
-                    final amount =
-                        double.parse(amountController.text);
+                    final amount = double.parse(amountController.text);
                     // Save to Firestore
-                    await _firestoreService.addTransaction(
-                      widget.userId,
-                      widget.pocketId,
-                      {
-                        'title': noteController.text.isEmpty
-                            ? 'New Expense'
-                            : noteController.text.trim(),
-                        'amount': amount,
-                        'pocket': widget.name,
-                        'userId': widget.userId,
-                        'createdAt':
-                            DateTime.now().toIso8601String(),
-                      },
-                    );
+                    await _firestoreService
+                        .addTransaction(widget.userId, widget.pocketId, {
+                          'title': noteController.text.isEmpty
+                              ? 'New Expense'
+                              : noteController.text.trim(),
+                          'amount': amount,
+                          'pocket': widget.name,
+                          'userId': widget.userId,
+                          'createdAt': DateTime.now().toIso8601String(),
+                        });
                     if (context.mounted) {
                       Navigator.pop(context);
                     }
@@ -140,10 +130,10 @@ class _PocketDetailScreenState
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Save Expense',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Save Expense',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ],
@@ -152,8 +142,7 @@ class _PocketDetailScreenState
     );
   }
 
-  InputDecoration _inputDecoration(String hint,
-      {String? prefix}) {
+  InputDecoration _inputDecoration(String hint, {String? prefix}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: Color(0xFF4A5A50)),
@@ -163,18 +152,15 @@ class _PocketDetailScreenState
       fillColor: const Color(0xFF111411),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: Color(0xFF2A3A2F)),
+        borderSide: const BorderSide(color: Color(0xFF2A3A2F)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-            const BorderSide(color: Color(0xFF2A3A2F)),
+        borderSide: const BorderSide(color: Color(0xFF2A3A2F)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-            color: Color(0xFF3DDB6F), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF3DDB6F), width: 1.5),
       ),
     );
   }
@@ -214,23 +200,22 @@ class _PocketDetailScreenState
             double spent = widget.spent;
 
             if (snapshot.hasData && snapshot.data!.exists) {
-              final data = snapshot.data!.data()
-                  as Map<String, dynamic>;
+              final data = snapshot.data!.data() as Map<String, dynamic>;
               budget = (data['budget'] ?? budget).toDouble();
               spent = (data['spent'] ?? spent).toDouble();
             }
 
             final remaining = budget - spent;
-            final progress =
-                budget > 0 ? remaining / budget : 0.0;
+            final progress = budget > 0 ? remaining / budget : 0.0;
 
             return Column(
               children: [
-
                 // Header
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 16),
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   child: Row(
                     children: [
                       // Back button
@@ -241,97 +226,93 @@ class _PocketDetailScreenState
                           height: 38,
                           decoration: BoxDecoration(
                             color: const Color(0xFF1A2A1F),
-                            borderRadius:
-                                BorderRadius.circular(10),
-                            border: Border.all(
-                                color:
-                                    const Color(0xFF2A3A2F)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF2A3A2F)),
                           ),
                           child: const Icon(
-                              Icons.arrow_back_ios_new,
-                              color: Colors.white,
-                              size: 16),
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
                       // Pocket name as title
-                      Text(widget.name,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        widget.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         // Balance card — real time
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1A2A1F),
-                            borderRadius:
-                                BorderRadius.circular(20),
-                            border: Border.all(
-                                color:
-                                    const Color(0xFF2A3A2F)),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFF2A3A2F)),
                           ),
                           child: Column(
                             children: [
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   _balanceStat(
-                                      'STARTING BALANCE',
-                                      '₱${budget.toStringAsFixed(2)}'),
+                                    'STARTING BALANCE',
+                                    '₱${budget.toStringAsFixed(2)}',
+                                  ),
                                   _balanceStat(
-                                      'LEFT TO SPEND',
-                                      '₱${remaining.toStringAsFixed(2)}',
-                                      highlight: true),
+                                    'LEFT TO SPEND',
+                                    '₱${remaining.toStringAsFixed(2)}',
+                                    highlight: true,
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceBetween,
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                      'SPENT: ₱${spent.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                          color: Color(
-                                              0xFF6B7C75),
-                                          fontSize: 11)),
+                                    'SPENT: ₱${spent.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF6B7C75),
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                   Text(
-                                      '${(progress * 100).toStringAsFixed(1)}% REMAINING',
-                                      style: TextStyle(
-                                          color: widget.color,
-                                          fontSize: 11)),
+                                    '${(progress * 100).toStringAsFixed(1)}% REMAINING',
+                                    style: TextStyle(
+                                      color: widget.color,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: progress,
-                                  backgroundColor:
-                                      const Color(0xFF2A3A2F),
+                                  backgroundColor: const Color(0xFF2A3A2F),
+                                  // ✅ Correct
                                   valueColor:
-                                      AlwaysStoppedAnimation
-                                              Color>(
-                                          widget.color),
+                                      const AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF3DDB6F),
+                                      ),
                                   minHeight: 6,
                                 ),
                               ),
@@ -346,23 +327,23 @@ class _PocketDetailScreenState
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton.icon(
-                            onPressed: () =>
-                                _showAddExpenseSheet(context),
-                            icon: const Icon(Icons.add,
-                                color: Colors.black, size: 20),
+                            onPressed: () => _showAddExpenseSheet(context),
+                            icon: const Icon(
+                              Icons.add,
+                              color: Colors.black,
+                              size: 20,
+                            ),
                             label: const Text(
-                                'Add what you spent',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 15,
-                                    fontWeight:
-                                        FontWeight.w600)),
+                              'Add what you spent',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                              ),
+                            ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color(0xFF3DDB6F),
+                              backgroundColor: const Color(0xFF3DDB6F),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                             ),
                           ),
@@ -372,21 +353,24 @@ class _PocketDetailScreenState
 
                         // History header
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('History',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight:
-                                        FontWeight.w600)),
+                            const Text(
+                              'History',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                              ),
+                            ),
                             TextButton(
                               onPressed: () {},
-                              child: const Text('All Activity',
-                                  style: TextStyle(
-                                      color: Color(0xFF3DDB6F),
-                                      fontSize: 13)),
+                              child: const Text(
+                                'All Activity',
+                                style: TextStyle(
+                                  color: Color(0xFF3DDB6F),
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -395,53 +379,50 @@ class _PocketDetailScreenState
 
                         // Real-time transactions from Firestore
                         StreamBuilder<QuerySnapshot>(
-                          stream:
-                              _firestoreService.getTransactions(
-                                  widget.userId,
-                                  widget.pocketId),
+                          stream: _firestoreService.getTransactions(
+                            widget.userId,
+                            widget.pocketId,
+                          ),
                           builder: (context, txSnapshot) {
                             if (txSnapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const Center(
-                                child:
-                                    CircularProgressIndicator(
-                                        color: Color(
-                                            0xFF3DDB6F)));
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF3DDB6F),
+                                ),
+                              );
                             }
 
-                            final txs =
-                                txSnapshot.data?.docs ?? [];
+                            final txs = txSnapshot.data?.docs ?? [];
 
                             if (txs.isEmpty) {
                               return Container(
                                 width: double.infinity,
-                                padding:
-                                    const EdgeInsets.all(24),
+                                padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFF1A2A1F),
-                                  borderRadius:
-                                      BorderRadius.circular(14),
+                                  color: const Color(0xFF1A2A1F),
+                                  borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                      color: const Color(
-                                          0xFF2A3A2F)),
+                                    color: const Color(0xFF2A3A2F),
+                                  ),
                                 ),
                                 child: const Column(
                                   children: [
-                                    Text('No expenses yet',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight:
-                                                FontWeight
-                                                    .w500)),
+                                    Text(
+                                      'No expenses yet',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
                                     SizedBox(height: 4),
                                     Text(
-                                        'Tap "Add what you spent" to log one',
-                                        style: TextStyle(
-                                            color: Color(
-                                                0xFF6B7C75),
-                                            fontSize: 12)),
+                                      'Tap "Add what you spent" to log one',
+                                      style: TextStyle(
+                                        color: Color(0xFF6B7C75),
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               );
@@ -449,13 +430,11 @@ class _PocketDetailScreenState
 
                             return Column(
                               children: txs.map((tx) {
-                                final data = tx.data()
-                                    as Map<String, dynamic>;
+                                final data = tx.data() as Map<String, dynamic>;
                                 return _transactionTile(
                                   data['title'] ?? 'Expense',
                                   '${widget.name} • ${_formatDate(data['createdAt'])}',
-                                  (data['amount'] ?? 0)
-                                      .toDouble(),
+                                  (data['amount'] ?? 0).toDouble(),
                                 );
                               }).toList(),
                             );
@@ -475,31 +454,30 @@ class _PocketDetailScreenState
     );
   }
 
-  Widget _balanceStat(String label, String amount,
-      {bool highlight = false}) {
+  Widget _balanceStat(String label, String amount, {bool highlight = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Color(0xFF6B7C75), fontSize: 10)),
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF6B7C75), fontSize: 10),
+        ),
         const SizedBox(height: 4),
-        Text(amount,
-            style: TextStyle(
-                color:
-                    highlight ? widget.color : Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold)),
+        Text(
+          amount,
+          style: TextStyle(
+            color: highlight ? widget.color : Colors.white,
+            fontSize: 20,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _transactionTile(
-      String title, String subtitle, double amount) {
+  Widget _transactionTile(String title, String subtitle, double amount) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF1A2A1F),
         borderRadius: BorderRadius.circular(14),
@@ -514,32 +492,42 @@ class _PocketDetailScreenState
               color: const Color(0xFF2A3A2F),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.receipt_outlined,
-                color: Color(0xFF6B7C75), size: 18),
+            child: const Icon(
+              Icons.receipt_outlined,
+              color: Color(0xFF6B7C75),
+              size: 18,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle,
-                    style: const TextStyle(
-                        color: Color(0xFF6B7C75),
-                        fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7C75),
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-          Text('-₱${amount.toStringAsFixed(2)}',
-              style: const TextStyle(
-                  color: Color(0xFFF87171),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            '-₱${amount.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Color(0xFFF87171),
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );

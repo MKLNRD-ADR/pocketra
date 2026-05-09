@@ -63,7 +63,7 @@ class _SignupScreenState extends State<SignupScreen> {
         );
 
         // Step 3 — Navigate to Dashboard
-        if (context.mounted) {
+        if (mounted && context.mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -123,8 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const Text('Pocketra',
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600)),
+                          fontSize: 18)),
                 ],
               ),
 
@@ -135,7 +134,6 @@ class _SignupScreenState extends State<SignupScreen> {
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 38,
-                      fontWeight: FontWeight.bold,
                       height: 1.1)),
 
               const SizedBox(height: 12),
@@ -281,9 +279,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           children: [
                             Text('Sign Up',
                                 style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight:
-                                        FontWeight.w600)),
+                                    fontSize: 16)),
                             SizedBox(width: 8),
                             Icon(Icons.arrow_forward, size: 18),
                           ],
@@ -307,8 +303,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: const Text('Log In',
                           style: TextStyle(
                               color: Color(0xFF3DDB6F),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600)),
+                              fontSize: 14)),
                     ),
                   ],
                 ),
@@ -324,8 +319,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Text(text,
         style: const TextStyle(
             color: Color(0xFFB0C4B8),
-            fontSize: 13,
-            fontWeight: FontWeight.w500));
+            fontSize: 13));
   }
 
   Widget _buildTextField({

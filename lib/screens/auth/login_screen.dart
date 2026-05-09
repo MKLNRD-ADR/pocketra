@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
       // Navigate to dashboard on success
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGoogle();
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
@@ -123,8 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text('Pocketra',
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600)),
+                          fontSize: 18)),
                 ],
               ),
 
@@ -135,7 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 38,
-                      fontWeight: FontWeight.bold,
                       height: 1.1)),
 
               const SizedBox(height: 12),
@@ -222,9 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Text('Log In',
                                 style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight:
-                                        FontWeight.w600)),
+                                    fontSize: 16)),
                             SizedBox(width: 8),
                             Icon(Icons.arrow_forward, size: 18),
                           ],
@@ -294,8 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('Sign Up',
                           style: TextStyle(
                               color: Color(0xFF3DDB6F),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600)),
+                              fontSize: 14)),
                     ),
                   ],
                 ),
@@ -311,8 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Text(text,
         style: const TextStyle(
             color: Color(0xFFB0C4B8),
-            fontSize: 13,
-            fontWeight: FontWeight.w500));
+            fontSize: 13));
   }
 
   Widget _buildTextField({
