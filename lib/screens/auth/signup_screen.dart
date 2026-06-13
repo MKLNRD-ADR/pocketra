@@ -29,7 +29,6 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _handleSignUp() async {
-    // Validation
     if (_nameController.text.trim().isEmpty) {
       _showError('Please enter your full name');
       return;
@@ -58,6 +57,9 @@ class _SignupScreenState extends State<SignupScreen> {
           {
             'name': _nameController.text.trim(),
             'email': _emailController.text.trim(),
+            // ✅ totalMoney starts at 0
+            // User will set this from Manage Money screen
+            'totalMoney': 0.0,
             'createdAt': DateTime.now().toIso8601String(),
           },
         );
@@ -129,7 +131,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 48),
 
-              // Title
               const Text('Create\naccount.',
                   style: TextStyle(
                       color: Colors.white,
@@ -140,11 +141,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const Text('Join 50k users tracking their future.',
                   style: TextStyle(
-                      color: Color(0xFF6B7C75), fontSize: 15)),
+                      color: Color(0xFF6B7C75),
+                      fontSize: 15)),
 
               const SizedBox(height: 40),
 
-              // Full Name
               _buildLabel('Full Name'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -155,7 +156,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 20),
 
-              // Email
               _buildLabel('Email'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -167,7 +167,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 20),
 
-              // Password
               _buildLabel('Password'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -190,7 +189,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 20),
 
-              // Terms checkbox
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -247,7 +245,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 32),
 
-              // Sign Up button
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -278,10 +275,11 @@ class _SignupScreenState extends State<SignupScreen> {
                               MainAxisAlignment.center,
                           children: [
                             Text('Sign Up',
-                                style: TextStyle(
-                                    fontSize: 16)),
+                                style:
+                                    TextStyle(fontSize: 16)),
                             SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 18),
+                            Icon(Icons.arrow_forward,
+                                size: 18),
                           ],
                         ),
                 ),
@@ -289,10 +287,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
               const SizedBox(height: 32),
 
-              // Login link
               Center(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
                   children: [
                     const Text('Already have an account? ',
                         style: TextStyle(
@@ -318,8 +316,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildLabel(String text) {
     return Text(text,
         style: const TextStyle(
-            color: Color(0xFFB0C4B8),
-            fontSize: 13));
+            color: Color(0xFFB0C4B8), fontSize: 13));
   }
 
   Widget _buildTextField({
@@ -338,8 +335,8 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF4A5A50)),
-        prefixIcon:
-            Icon(icon, color: const Color(0xFF6B7C75), size: 20),
+        prefixIcon: Icon(icon,
+            color: const Color(0xFF6B7C75), size: 20),
         suffixIcon: suffix,
         filled: true,
         fillColor: const Color(0xFF1A2A1F),
@@ -361,4 +358,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-}
+} 

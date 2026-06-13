@@ -213,6 +213,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 final data = tx.data()
                                     as Map<String, dynamic>;
                                 return _transactionTile(
+                                  tx.id,       // ← added
+                                  pocketId,    // ← added
                                   data['title'] ?? 'Expense',
                                   _formatDate(
                                       data['createdAt']),
@@ -270,84 +272,165 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  // Transaction tile with swipe to delete
   Widget _transactionTile(
+    String txId,
+    String pocketId,
     String title,
     String date,
     double amount,
     String pocket,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2A1F),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2A3A2F)),
+    return Dismissible(
+      key: Key(txId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF87171),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.delete_outline,
+            color: Colors.white, size: 22),
       ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A3A2F),
-              borderRadius: BorderRadius.circular(12),
+      confirmDismiss: (direction) async {
+        bool confirm = false;
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A2A1F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.receipt_outlined,
-              color: Color(0xFF3DDB6F),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Title and pocket name
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14)),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3DDB6F)
-                            .withValues(alpha: 0.15),
-                        borderRadius:
-                            BorderRadius.circular(4),
-                      ),
-                      child: Text(pocket,
-                          style: const TextStyle(
-                              color: Color(0xFF3DDB6F),
-                              fontSize: 10)),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(date,
-                        style: const TextStyle(
-                            color: Color(0xFF6B7C75),
-                            fontSize: 11)),
-                  ],
+            title: const Text('Delete Transaction',
+                style: TextStyle(color: Colors.white)),
+            content: Text('Delete "$title"?',
+                style: const TextStyle(
+                    color: Color(0xFF6B7C75))),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  confirm = false;
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel',
+                    style: TextStyle(
+                        color: Color(0xFF6B7C75))),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  confirm = true;
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF87171),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+        return confirm;
+      },
+      onDismissed: (direction) async {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .collection('pockets')
+            .doc(pocketId)
+            .collection('transactions')
+            .doc(txId)
+            .delete();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2A1F),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF2A3A2F)),
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A3A2F),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.receipt_outlined,
+                color: Color(0xFF3DDB6F),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Title and pocket name
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14)),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3DDB6F)
+                              .withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(4),
+                        ),
+                        child: Text(pocket,
+                            style: const TextStyle(
+                                color: Color(0xFF3DDB6F),
+                                fontSize: 10)),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(date,
+                          style: const TextStyle(
+                              color: Color(0xFF6B7C75),
+                              fontSize: 11)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Amount + swipe hint
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '-₱${amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      color: Color(0xFFF87171),
+                      fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                const Text('swipe to delete',
+                    style: TextStyle(
+                        color: Color(0xFF4A5A50),
+                        fontSize: 10)),
               ],
             ),
-          ),
-
-          // Amount
-          Text(
-            '-₱${amount.toStringAsFixed(2)}',
-            style: const TextStyle(
-                color: Color(0xFFF87171),
-                fontSize: 14),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -27,7 +27,6 @@ class PocketDetailScreen extends StatefulWidget {
 class _PocketDetailScreenState extends State<PocketDetailScreen> {
   final _firestoreService = FirestoreService();
 
-  // Shows bottom sheet to add a new expense
   void _showAddExpenseSheet(BuildContext context) {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
@@ -50,7 +49,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle bar
             Center(
               child: Container(
                 width: 40,
@@ -65,14 +63,10 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
 
             Text(
               'Add Expense — ${widget.name}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 17),
             ),
             const SizedBox(height: 20),
 
-            // Amount field
             const Text(
               'Amount',
               style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
@@ -86,7 +80,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Note field
             const Text(
               'Note',
               style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
@@ -99,7 +92,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Save button
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -107,7 +99,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                 onPressed: () async {
                   if (amountController.text.isNotEmpty) {
                     final amount = double.parse(amountController.text);
-                    // Save to Firestore
                     await _firestoreService
                         .addTransaction(widget.userId, widget.pocketId, {
                           'title': noteController.text.isEmpty
@@ -165,7 +156,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
     );
   }
 
-  // Formats date string to Today/Yesterday/X days ago
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'Recently';
     try {
@@ -185,7 +175,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF111411),
       body: SafeArea(
-        // StreamBuilder listens to real-time pocket data
         child: StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
@@ -194,8 +183,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
               .doc(widget.pocketId)
               .snapshots(),
           builder: (context, snapshot) {
-            // Use live data if available
-            // Otherwise fall back to passed-in values
             double budget = widget.startingBalance;
             double spent = widget.spent;
 
@@ -206,7 +193,9 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
             }
 
             final remaining = budget - spent;
-            final progress = budget > 0 ? remaining / budget : 0.0;
+            final progress = budget > 0
+                ? (remaining / budget).clamp(0.0, 1.0)
+                : 0.0;
 
             return Column(
               children: [
@@ -218,7 +207,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      // Back button
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
@@ -237,7 +225,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      // Pocket name as title
                       Text(
                         widget.name,
                         style: const TextStyle(
@@ -255,7 +242,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Balance card — real time
+                        // Balance card
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
@@ -308,11 +295,9 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                                 child: LinearProgressIndicator(
                                   value: progress,
                                   backgroundColor: const Color(0xFF2A3A2F),
-                                  // ✅ Correct
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF3DDB6F),
-                                      ),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    widget.color,
+                                  ),
                                   minHeight: 6,
                                 ),
                               ),
@@ -377,7 +362,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Real-time transactions from Firestore
+                        // Transactions
                         StreamBuilder<QuerySnapshot>(
                           stream: _firestoreService.getTransactions(
                             widget.userId,
@@ -505,10 +490,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -523,10 +505,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
           ),
           Text(
             '-₱${amount.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Color(0xFFF87171),
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Color(0xFFF87171), fontSize: 14),
           ),
         ],
       ),
