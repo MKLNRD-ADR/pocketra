@@ -35,52 +35,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'there';
   }
 
-  // Delete pocket with confirmation dialog
-void _showDeletePocketDialog(
-    BuildContext context, String pocketId, String pocketName) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: const Color(0xFF1A2A1F),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      title: const Text('Delete Pocket',
-          style: TextStyle(color: Colors.white)),
-      content: Text(
-        'Delete "$pocketName"? Spent money will stay deducted from your total.',
-        style: const TextStyle(color: Color(0xFF6B7C75)),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel',
-              style: TextStyle(color: Color(0xFF6B7C75))),
+  // Delete pocket — restores spent money to total
+  void _showDeletePocketDialog(BuildContext context,
+      String pocketId, String pocketName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2A1F),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
-        ElevatedButton(
-          onPressed: () async {
-            await _firestoreService.deletePocket(
-                _user!.uid, pocketId);
-            if (context.mounted) Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF87171),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+        title: const Text('Delete Section',
+            style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Delete "$pocketName"?\n\nAny money spent in this section will be restored to your total balance.',
+          style: const TextStyle(
+              color: Color(0xFF6B7C75), height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF6B7C75))),
           ),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-}
+          ElevatedButton(
+            onPressed: () async {
+              // deletePocket now restores spent money automatically
+              await _firestoreService.deletePocket(
+                  _user!.uid, pocketId);
+              if (context.mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF87171),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
-  void _showAddPocketSheet() {
+  // Add pocket with budget validation
+  void _showAddPocketSheet(double totalMoney) {
     final nameController = TextEditingController();
     final budgetController = TextEditingController();
     int selectedColor = 0;
+    String? errorMessage;
 
     showModalBottomSheet(
       context: context,
@@ -112,16 +116,12 @@ void _showDeletePocketDialog(
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Add New Pocket',
-                style: TextStyle(color: Colors.white, fontSize: 17),
-              ),
+              const Text('Add New Section',
+                  style: TextStyle(color: Colors.white, fontSize: 17)),
               const SizedBox(height: 20),
 
-              const Text(
-                'Pocket Name',
-                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
-              ),
+              const Text('Section Name',
+                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
               const SizedBox(height: 8),
               TextField(
                 controller: nameController,
@@ -130,10 +130,8 @@ void _showDeletePocketDialog(
               ),
               const SizedBox(height: 16),
 
-              const Text(
-                'Budget',
-                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
-              ),
+              const Text('Budget',
+                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
               const SizedBox(height: 8),
               TextField(
                 controller: budgetController,
@@ -141,12 +139,18 @@ void _showDeletePocketDialog(
                 style: const TextStyle(color: Colors.white, fontSize: 15),
                 decoration: _inputDecoration('0.00', prefix: '₱ '),
               ),
+
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(errorMessage!,
+                    style: const TextStyle(
+                        color: Color(0xFFF87171), fontSize: 12)),
+              ],
+
               const SizedBox(height: 16),
 
-              const Text(
-                'Color',
-                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
-              ),
+              const Text('Color',
+                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 36,
@@ -179,9 +183,25 @@ void _showDeletePocketDialog(
                   onPressed: () async {
                     if (nameController.text.isNotEmpty &&
                         budgetController.text.isNotEmpty) {
-                      await _firestoreService.addPocket(_user!.uid, {
+                      final newBudget =
+                          double.parse(budgetController.text);
+
+                      final totalReserved =
+                          await _firestoreService
+                              .getTotalReserved(_user!.uid);
+                      final available = totalMoney - totalReserved;
+
+                      if (newBudget > available) {
+                        setSheetState(() {
+                          errorMessage =
+                              'Not enough! Available to allocate: ₱${available.toStringAsFixed(2)}';
+                        });
+                        return;
+                      }
+
+                      await _firestoreService.addPocket(_user.uid, {
                         'name': nameController.text.trim().toUpperCase(),
-                        'budget': double.parse(budgetController.text),
+                        'budget': newBudget,
                         'spent': 0.0,
                         'colorIndex': selectedColor,
                         'createdAt': DateTime.now().toIso8601String(),
@@ -198,10 +218,8 @@ void _showDeletePocketDialog(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'Create Pocket',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Create Section',
+                      style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -379,7 +397,7 @@ void _showDeletePocketDialog(
                               child: LinearProgressIndicator(
                                 value: progress,
                                 backgroundColor: const Color(0xFF2A3A2F),
-                                valueColor: AlwaysStoppedAnimation<Color>(
+                                valueColor: const AlwaysStoppedAnimation<Color>(
                                   Color(0xFF3DDB6F),
                                 ),
                                 minHeight: 6,
@@ -400,7 +418,8 @@ void _showDeletePocketDialog(
                             style: TextStyle(color: Colors.white, fontSize: 17),
                           ),
                           TextButton(
-                            onPressed: _showAddPocketSheet,
+                            onPressed: () =>
+                                _showAddPocketSheet(totalMoney),
                             child: const Text(
                               'Add Section',
                               style: TextStyle(
@@ -428,18 +447,20 @@ void _showDeletePocketDialog(
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 12,
-                                    mainAxisSpacing: 12,
-                                    childAspectRatio: 1.4,
-                                  ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1.4,
+                              ),
                               itemCount: pockets.length,
                               itemBuilder: (context, i) {
                                 final data =
                                     pockets[i].data() as Map<String, dynamic>;
                                 final pocketId = pockets[i].id;
-                                final budget = (data['budget'] ?? 0).toDouble();
-                                final spent = (data['spent'] ?? 0).toDouble();
+                                final budget =
+                                    (data['budget'] ?? 0).toDouble();
+                                final spent =
+                                    (data['spent'] ?? 0).toDouble();
                                 final remaining = budget - spent;
                                 final progress = budget > 0
                                     ? (remaining / budget).clamp(0.0, 1.0)
@@ -450,32 +471,32 @@ void _showDeletePocketDialog(
                                 final color = _pocketColors[colorIndex];
 
                                 return GestureDetector(
-  onTap: () => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PocketDetailScreen(
-        pocketId: pocketId,
-        userId: _user.uid,
-        name: data['name'] ?? '',
-        color: color,
-        startingBalance: budget,
-        spent: spent,
-      ),
-    ),
-  ),
-  // Long press to delete
-  onLongPress: () => _showDeletePocketDialog(
-    context,
-    pocketId,
-    data['name'] ?? '',
-  ),
-  child: _pocketCard(
-    data['name'] ?? '',
-    remaining,
-    progress.toDouble(),
-    color,
-  ),
-);
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PocketDetailScreen(
+                                        pocketId: pocketId,
+                                        userId: _user.uid,
+                                        name: data['name'] ?? '',
+                                        color: color,
+                                        startingBalance: budget,
+                                        spent: spent,
+                                      ),
+                                    ),
+                                  ),
+                                  onLongPress: () =>
+                                      _showDeletePocketDialog(
+                                    context,
+                                    pocketId,
+                                    data['name'] ?? '',
+                                  ),
+                                  child: _pocketCard(
+                                    data['name'] ?? '',
+                                    remaining,
+                                    progress.toDouble(),
+                                    color,
+                                  ),
+                                );
                               },
                             ),
 
@@ -512,8 +533,15 @@ void _showDeletePocketDialog(
 
                       const SizedBox(height: 8),
 
-                      pockets.isEmpty
-                          ? const Center(
+                      // Real transactions from all pockets
+                      StreamBuilder<QuerySnapshot>(
+                        stream: _firestoreService
+                            .getAllRecentTransactions(_user.uid),
+                        builder: (context, txSnapshot) {
+                          final txs = txSnapshot.data?.docs ?? [];
+
+                          if (txs.isEmpty) {
+                            return const Center(
                               child: Text(
                                 'No transactions yet',
                                 style: TextStyle(
@@ -521,21 +549,26 @@ void _showDeletePocketDialog(
                                   fontSize: 13,
                                 ),
                               ),
-                            )
-                          : Column(
-                              children: pockets.take(3).map((p) {
-                                final data = p.data() as Map<String, dynamic>;
-                                final spent = (data['spent'] ?? 0).toDouble();
-                                if (spent == 0) {
-                                  return const SizedBox();
-                                }
-                                return _transactionTile(
-                                  data['name'] ?? '',
-                                  '${data['name']} • Recent',
-                                  '-₱${spent.toStringAsFixed(2)}',
-                                );
-                              }).toList(),
-                            ),
+                            );
+                          }
+
+                          return Column(
+                            children: txs.map((tx) {
+                              final data =
+                                  tx.data() as Map<String, dynamic>;
+                              final pocketId =
+                                  tx.reference.parent.parent?.id ?? '';
+                              return _recentTransactionTile(
+                                tx.id,
+                                pocketId,
+                                data['title'] ?? 'Expense',
+                                data['pocket'] ?? '',
+                                (data['amount'] ?? 0).toDouble(),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
 
                       const SizedBox(height: 100),
                     ],
@@ -655,55 +688,121 @@ void _showDeletePocketDialog(
     );
   }
 
-  Widget _transactionTile(String title, String subtitle, String amount) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2A1F),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2A3A2F)),
+  // Recent transaction tile with swipe to delete
+  Widget _recentTransactionTile(String txId, String pocketId,
+      String title, String pocket, double amount) {
+    return Dismissible(
+      key: Key(txId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF87171),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        alignment: Alignment.centerRight,
+        child: const Icon(Icons.delete_outline,
+            color: Colors.white, size: 22),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A3A2F),
-              borderRadius: BorderRadius.circular(10),
+      confirmDismiss: (direction) async {
+        bool confirm = false;
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1A2A1F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.wallet_outlined,
-              color: Color(0xFF6B7C75),
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6B7C75),
-                    fontSize: 12,
+            title: const Text('Delete Transaction',
+                style: TextStyle(color: Colors.white)),
+            content: Text('Delete "$title"?',
+                style: const TextStyle(color: Color(0xFF6B7C75))),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  confirm = false;
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel',
+                    style: TextStyle(color: Color(0xFF6B7C75))),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  confirm = true;
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF87171),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+        return confirm;
+      },
+      onDismissed: (direction) async {
+        await _firestoreService.deleteTransaction(
+          _user!.uid,
+          pocketId,
+          txId,
+          amount,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2A1F),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFF2A3A2F)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2A3A2F),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.receipt_outlined,
+                  color: Color(0xFF6B7C75), size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(pocket,
+                      style: const TextStyle(
+                          color: Color(0xFF6B7C75), fontSize: 12)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('-₱${amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        color: Color(0xFFF87171), fontSize: 14)),
+                const SizedBox(height: 2),
+                const Text('swipe to delete',
+                    style: TextStyle(
+                        color: Color(0xFF4A5A50), fontSize: 10)),
               ],
             ),
-          ),
-          Text(
-            amount,
-            style: const TextStyle(color: Color(0xFFF87171), fontSize: 14),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

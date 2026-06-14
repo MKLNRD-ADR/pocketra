@@ -225,11 +225,13 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 14),
-                      Text(
-                        widget.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                      Expanded(
+                        child: Text(
+                          widget.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                     ],
@@ -336,28 +338,13 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
 
                         const SizedBox(height: 28),
 
-                        // History header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'History',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {},
-                              child: const Text(
-                                'All Activity',
-                                style: TextStyle(
-                                  color: Color(0xFF3DDB6F),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
+                        // History header — plain Text, no "All Activity" button
+                        const Text(
+                          'History',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                          ),
                         ),
 
                         const SizedBox(height: 8),
@@ -460,7 +447,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
     );
   }
 
-  // Transaction tile with swipe to delete
+  // Swipe to delete — restores money to pocket and total
   Widget _transactionTile(String txId, String title,
       String subtitle, double amount) {
     return Dismissible(
@@ -488,8 +475,11 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
             ),
             title: const Text('Delete Transaction',
                 style: TextStyle(color: Colors.white)),
-            content: Text('Delete "$title"?',
-                style: const TextStyle(color: Color(0xFF6B7C75))),
+            content: Text(
+                'Delete "$title"?\n\nThis amount will be restored to your balance.',
+                style: const TextStyle(
+                    color: Color(0xFF6B7C75),
+                    height: 1.5)),
             actions: [
               TextButton(
                 onPressed: () {
@@ -519,14 +509,14 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
         return confirm;
       },
       onDismissed: (direction) async {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.userId)
-            .collection('pockets')
-            .doc(widget.pocketId)
-            .collection('transactions')
-            .doc(txId)
-            .delete();
+        // deleteTransaction restores money to both
+        // pocket spent amount AND total money
+        await _firestoreService.deleteTransaction(
+          widget.userId,
+          widget.pocketId,
+          txId,
+          amount,
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

@@ -7,20 +7,16 @@ class FirestoreService {
   // USER
   // ─────────────────────────────────────────
 
-  // Creates user profile when they first sign up
   Future<void> createUserProfile(
       String userId, Map<String, dynamic> data) async {
     await _db.collection('users').doc(userId).set(data);
   }
 
-  // Gets user profile data once
   Future<DocumentSnapshot> getUserProfile(
       String userId) async {
     return await _db.collection('users').doc(userId).get();
   }
 
-  // Real-time stream of user data
-  // Used to watch totalMoney changes in dashboard
   Stream<DocumentSnapshot> getUserStream(String userId) {
     return _db.collection('users').doc(userId).snapshots();
   }
@@ -29,38 +25,19 @@ class FirestoreService {
   // TOTAL MONEY
   // ─────────────────────────────────────────
 
-  // Set total money directly (edit existing amount)
-  // Uses merge so it works even if field doesn't exist yet
   Future<void> setTotalMoney(
       String userId, double amount) async {
     await _db.collection('users').doc(userId).set({
       'totalMoney': amount,
     }, SetOptions(merge: true));
-
-    // Save to history so user can track changes
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection('moneyHistory')
-        .add({
-      'type': 'set',
-      'amount': amount,
-      'note': 'Set total money',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
   }
 
-  // Add money to existing total + save to history
-  // Example: total is 1000, add 500 → total becomes 1500
   Future<void> addMoney(
       String userId, double amount, String note) async {
-    // Increment existing totalMoney
-    // merge: true means create field if it doesn't exist
     await _db.collection('users').doc(userId).set({
       'totalMoney': FieldValue.increment(amount),
     }, SetOptions(merge: true));
 
-    // Save to money history
     await _db
         .collection('users')
         .doc(userId)
@@ -73,8 +50,6 @@ class FirestoreService {
     });
   }
 
-  // Deduct from total money when expense is added
-  // Called automatically inside addTransaction
   Future<void> deductFromTotal(
       String userId, double amount) async {
     await _db.collection('users').doc(userId).set({
@@ -82,8 +57,15 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
-  // Real-time stream of money history
-  // Shows all add/set operations in Manage Money screen
+  // Restore money back to total
+  // Used when deleting transactions or money history
+  Future<void> restoreToTotal(
+      String userId, double amount) async {
+    await _db.collection('users').doc(userId).set({
+      'totalMoney': FieldValue.increment(amount),
+    }, SetOptions(merge: true));
+  }
+
   Stream<QuerySnapshot> getMoneyHistory(String userId) {
     return _db
         .collection('users')
@@ -93,11 +75,31 @@ class FirestoreService {
         .snapshots();
   }
 
+  // Delete money history entry and reverse the money
+  Future<void> deleteMoneyHistory(
+      String userId, String historyId, double amount, String type) async {
+    // Delete the history record
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('moneyHistory')
+        .doc(historyId)
+        .delete();
+
+    // Reverse the money effect
+    // If it was 'add' type → deduct it back
+    // If it was 'set' type → just delete, user must re-set
+    if (type == 'add') {
+      await _db.collection('users').doc(userId).set({
+        'totalMoney': FieldValue.increment(-amount),
+      }, SetOptions(merge: true));
+    }
+  }
+
   // ─────────────────────────────────────────
   // POCKETS
   // ─────────────────────────────────────────
 
-  // Creates a new pocket (e.g. Food & Snacks, Commute)
   Future<void> addPocket(
       String userId, Map<String, dynamic> pocket) async {
     await _db
@@ -107,8 +109,6 @@ class FirestoreService {
         .add(pocket);
   }
 
-  // Real-time stream of all pockets
-  // Updates instantly when pocket data changes
   Stream<QuerySnapshot> getPockets(String userId) {
     return _db
         .collection('users')
@@ -118,7 +118,6 @@ class FirestoreService {
         .snapshots();
   }
 
-  // Updates pocket data (e.g. name, budget)
   Future<void> updatePocket(
       String userId,
       String pocketId,
@@ -131,10 +130,28 @@ class FirestoreService {
         .update(data);
   }
 
-  // Deletes a pocket
-  // Note: spent money stays deducted from total
+  // Delete pocket AND restore spent money to total
   Future<void> deletePocket(
       String userId, String pocketId) async {
+    // Get pocket data first to know how much was spent
+    final pocketDoc = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('pockets')
+        .doc(pocketId)
+        .get();
+
+    if (pocketDoc.exists) {
+      final data = pocketDoc.data() as Map<String, dynamic>;
+      final spent = (data['spent'] ?? 0).toDouble();
+
+      // Restore the spent amount back to total money
+      if (spent > 0) {
+        await restoreToTotal(userId, spent);
+      }
+    }
+
+    // Delete the pocket document
     await _db
         .collection('users')
         .doc(userId)
@@ -143,20 +160,33 @@ class FirestoreService {
         .delete();
   }
 
+  // Get total reserved budget across all pockets
+  // Used to validate new pocket budget
+  Future<double> getTotalReserved(String userId) async {
+    final pockets = await _db
+        .collection('users')
+        .doc(userId)
+        .collection('pockets')
+        .get();
+
+    double total = 0;
+    for (var p in pockets.docs) {
+      final data = p.data();
+      total += (data['budget'] ?? 0).toDouble();
+    }
+    return total;
+  }
+
   // ─────────────────────────────────────────
   // TRANSACTIONS
   // ─────────────────────────────────────────
 
-  // Adds a new expense to a pocket
-  // Automatically deducts from:
-  //   1. Pocket's own spent amount
-  //   2. User's total money
   Future<void> addTransaction(
       String userId,
       String pocketId,
       Map<String, dynamic> transaction) async {
 
-    // Step 1 — Save transaction record to pocket
+    // Step 1 — Save transaction
     await _db
         .collection('users')
         .doc(userId)
@@ -165,8 +195,7 @@ class FirestoreService {
         .collection('transactions')
         .add(transaction);
 
-    // Step 2 — Deduct from pocket's spent amount
-    // So pocket balance updates correctly
+    // Step 2 — Deduct from pocket spent
     await _db
         .collection('users')
         .doc(userId)
@@ -176,14 +205,42 @@ class FirestoreService {
       'spent': FieldValue.increment(transaction['amount']),
     });
 
-    // Step 3 — Deduct from user's total money
-    // This is the key — spending affects total balance
+    // Step 3 — Deduct from total money
     await deductFromTotal(
         userId, transaction['amount'].toDouble());
   }
 
-  // Real-time stream of all transactions for a pocket
-  // Ordered by newest first
+  // Delete transaction and restore money back
+  Future<void> deleteTransaction(
+      String userId,
+      String pocketId,
+      String transactionId,
+      double amount) async {
+
+    // Step 1 — Delete the transaction record
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('pockets')
+        .doc(pocketId)
+        .collection('transactions')
+        .doc(transactionId)
+        .delete();
+
+    // Step 2 — Restore to pocket's spent amount
+    await _db
+        .collection('users')
+        .doc(userId)
+        .collection('pockets')
+        .doc(pocketId)
+        .update({
+      'spent': FieldValue.increment(-amount),
+    });
+
+    // Step 3 — Restore to total money
+    await restoreToTotal(userId, amount);
+  }
+
   Stream<QuerySnapshot> getTransactions(
       String userId, String pocketId) {
     return _db
@@ -196,14 +253,14 @@ class FirestoreService {
         .snapshots();
   }
 
-  // Gets all transactions across ALL pockets
+  // Get recent transactions across ALL pockets
   // Used for dashboard recent spend section
-  Stream<QuerySnapshot> getAllTransactions(String userId) {
+  Stream<QuerySnapshot> getAllRecentTransactions(String userId) {
     return _db
         .collectionGroup('transactions')
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
-        .limit(10)
+        .limit(5)
         .snapshots();
   }
 }

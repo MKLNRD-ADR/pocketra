@@ -14,9 +14,10 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final _firestoreService = FirestoreService();
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Today', 'This Week', 'This Month'];
+  final List<String> _filters = [
+    'All', 'Today', 'This Week', 'This Month'
+  ];
 
-  // Formats date string to readable format
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'Recently';
     try {
@@ -32,7 +33,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  // Filters transactions based on selected filter
   bool _matchesFilter(String? dateStr) {
     if (_selectedFilter == 'All') return true;
     if (dateStr == null) return false;
@@ -71,9 +71,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       height: 38,
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A2A1F),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius:
+                            BorderRadius.circular(10),
                         border: Border.all(
-                            color: const Color(0xFF2A3A2F)),
+                            color:
+                                const Color(0xFF2A3A2F)),
                       ),
                       child: const Icon(
                           Icons.arrow_back_ios_new,
@@ -95,24 +97,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
               height: 40,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20),
                 itemCount: _filters.length,
                 itemBuilder: (context, i) {
                   final isSelected =
                       _selectedFilter == _filters[i];
                   return GestureDetector(
-                    onTap: () => setState(
-                        () => _selectedFilter = _filters[i]),
+                    onTap: () => setState(() =>
+                        _selectedFilter = _filters[i]),
                     child: Container(
-                      margin: const EdgeInsets.only(right: 8),
+                      margin:
+                          const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFF3DDB6F)
                             : const Color(0xFF1A2A1F),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius:
+                            BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF3DDB6F)
@@ -139,8 +143,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
             // Transactions list
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream:
-                    _firestoreService.getPockets(widget.userId),
+                stream: _firestoreService
+                    .getPockets(widget.userId),
                 builder: (context, pocketSnapshot) {
                   if (pocketSnapshot.connectionState ==
                       ConnectionState.waiting) {
@@ -157,15 +161,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     return _emptyState();
                   }
 
-                  // Build a list of all transactions
-                  // from all pockets combined
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20),
                     itemCount: pockets.length,
                     itemBuilder: (context, i) {
-                      final pocketData = pockets[i].data()
-                          as Map<String, dynamic>;
+                      final pocketData =
+                          pockets[i].data()
+                              as Map<String, dynamic>;
                       final pocketId = pockets[i].id;
                       final pocketName =
                           pocketData['name'] ?? '';
@@ -178,8 +181,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           final txs =
                               txSnapshot.data?.docs ?? [];
 
-                          // Filter transactions
-                          final filtered = txs.where((tx) {
+                          final filtered =
+                              txs.where((tx) {
                             final data = tx.data()
                                 as Map<String, dynamic>;
                             return _matchesFilter(
@@ -194,28 +197,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             crossAxisAlignment:
                                 CrossAxisAlignment.start,
                             children: [
-                              // Pocket name header
                               Padding(
                                 padding:
                                     const EdgeInsets.only(
-                                        top: 16, bottom: 8),
+                                        top: 16,
+                                        bottom: 8),
                                 child: Text(
                                   pocketName,
                                   style: const TextStyle(
-                                    color: Color(0xFF6B7C75),
+                                    color:
+                                        Color(0xFF6B7C75),
                                     fontSize: 12,
                                   ),
                                 ),
                               ),
-
-                              // Transactions under this pocket
                               ...filtered.map((tx) {
                                 final data = tx.data()
-                                    as Map<String, dynamic>;
+                                    as Map<String,
+                                        dynamic>;
                                 return _transactionTile(
-                                  tx.id,       // ← added
-                                  pocketId,    // ← added
-                                  data['title'] ?? 'Expense',
+                                  tx.id,
+                                  pocketId,
+                                  data['title'] ??
+                                      'Expense',
                                   _formatDate(
                                       data['createdAt']),
                                   (data['amount'] ?? 0)
@@ -250,17 +254,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
               color: const Color(0xFF1A2A1F),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
-              Icons.history,
-              color: Color(0xFF3DDB6F),
-              size: 40,
-            ),
+            child: const Icon(Icons.history,
+                color: Color(0xFF3DDB6F), size: 40),
           ),
           const SizedBox(height: 16),
           const Text('No transactions yet',
               style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16)),
+                  color: Colors.white, fontSize: 16)),
           const SizedBox(height: 8),
           const Text(
               'Your spending history will appear here',
@@ -272,7 +272,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  // Transaction tile with swipe to delete
+  // Swipe to delete — restores money to pocket and total
   Widget _transactionTile(
     String txId,
     String pocketId,
@@ -306,9 +306,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             title: const Text('Delete Transaction',
                 style: TextStyle(color: Colors.white)),
-            content: Text('Delete "$title"?',
+            content: Text(
+                'Delete "$title"?\n\nThis amount will be restored to your balance.',
                 style: const TextStyle(
-                    color: Color(0xFF6B7C75))),
+                    color: Color(0xFF6B7C75),
+                    height: 1.5)),
             actions: [
               TextButton(
                 onPressed: () {
@@ -325,10 +327,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF87171),
+                  backgroundColor:
+                      const Color(0xFFF87171),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius:
+                        BorderRadius.circular(10),
                   ),
                 ),
                 child: const Text('Delete'),
@@ -339,14 +343,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return confirm;
       },
       onDismissed: (direction) async {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.userId)
-            .collection('pockets')
-            .doc(pocketId)
-            .collection('transactions')
-            .doc(txId)
-            .delete();
+        // Restores money to pocket spent AND total money
+        await _firestoreService.deleteTransaction(
+          widget.userId,
+          pocketId,
+          txId,
+          amount,
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -355,11 +358,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF1A2A1F),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF2A3A2F)),
+          border:
+              Border.all(color: const Color(0xFF2A3A2F)),
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 42,
               height: 42,
@@ -367,18 +370,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 color: const Color(0xFF2A3A2F),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.receipt_outlined,
-                color: Color(0xFF3DDB6F),
-                size: 20,
-              ),
+              child: const Icon(Icons.receipt_outlined,
+                  color: Color(0xFF3DDB6F), size: 20),
             ),
             const SizedBox(width: 12),
-
-            // Title and pocket name
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(title,
                       style: const TextStyle(
@@ -411,17 +410,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             ),
-
-            // Amount + swipe hint
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  '-₱${amount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      color: Color(0xFFF87171),
-                      fontSize: 14),
-                ),
+                Text('-₱${amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        color: Color(0xFFF87171),
+                        fontSize: 14)),
                 const SizedBox(height: 2),
                 const Text('swipe to delete',
                     style: TextStyle(
