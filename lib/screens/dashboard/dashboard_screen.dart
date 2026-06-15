@@ -27,9 +27,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const Color(0xFFFB923C),
   ];
 
-  String _getFirstName(String? displayName, String? email) {
-    if (displayName != null && displayName.isNotEmpty) {
-      return displayName.split(' ').first;
+  // ✅ Get name from Firestore stream, not from _user
+  // This ensures name updates immediately
+  String _getFirstName(String? name, String? email) {
+    if (name != null && name.isNotEmpty) {
+      return name.split(' ').first;
     }
     if (email != null) return email.split('@').first;
     return 'there';
@@ -194,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       if (newBudget > available) {
                         setSheetState(() {
                           errorMessage =
-                              'Not enough! Available to allocate: ₱${available.toStringAsFixed(2)}';
+                              'Not enough! Available: ₱${available.toStringAsFixed(2)}';
                         });
                         return;
                       }
@@ -254,8 +256,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final firstName = _getFirstName(_user?.displayName, _user?.email);
-
     return Scaffold(
       backgroundColor: const Color(0xFF111411),
       body: SafeArea(
@@ -265,6 +265,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final userData =
                 userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
             final totalMoney = (userData['totalMoney'] ?? 0).toDouble();
+
+            // ✅ Get name from Firestore stream
+            // so it updates immediately when changed
+            final userName = userData['name'] as String?;
+            final firstName = _getFirstName(userName, _user.email);
+            final initial = firstName.isNotEmpty
+                ? firstName[0].toUpperCase()
+                : '?';
 
             return StreamBuilder<QuerySnapshot>(
               stream: _firestoreService.getPockets(_user.uid),
@@ -300,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 radius: 20,
                                 backgroundColor: const Color(0xFF3DDB6F),
                                 child: Text(
-                                  firstName[0].toUpperCase(),
+                                  initial,
                                   style: const TextStyle(color: Colors.black),
                                 ),
                               ),
@@ -308,6 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // ✅ Uses real-time name
                                   Text(
                                     'Hey $firstName!',
                                     style: const TextStyle(
@@ -533,20 +542,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       const SizedBox(height: 8),
 
-                      // Real transactions from all pockets
+                      // ✅ Real transactions from all pockets
                       StreamBuilder<QuerySnapshot>(
                         stream: _firestoreService
                             .getAllRecentTransactions(_user.uid),
                         builder: (context, txSnapshot) {
+                          if (txSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF3DDB6F),
+                              ),
+                            );
+                          }
+
                           final txs = txSnapshot.data?.docs ?? [];
 
                           if (txs.isEmpty) {
                             return const Center(
-                              child: Text(
-                                'No transactions yet',
-                                style: TextStyle(
-                                  color: Color(0xFF6B7C75),
-                                  fontSize: 13,
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  'No transactions yet',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B7C75),
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             );

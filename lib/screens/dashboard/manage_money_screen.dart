@@ -16,14 +16,10 @@ class _ManageMoneyScreenState
     extends State<ManageMoneyScreen> {
   final _firestoreService = FirestoreService();
 
-  void _showSetMoneySheet(double currentAmount) {
-    final amountController = TextEditingController(
-      text: currentAmount > 0
-          ? currentAmount.toStringAsFixed(2)
-          : '',
-    );
+  // ✅ Separate sheets for Add and Edit
+  void _showAddMoneySheet() {
+    final amountController = TextEditingController();
     final noteController = TextEditingController();
-    bool isAdding = true;
 
     showModalBottomSheet(
       context: context,
@@ -33,195 +29,241 @@ class _ManageMoneyScreenState
             BorderRadius.vertical(top: Radius.circular(24)),
       ),
       isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom:
-                MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A3A2F),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A3A2F),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
+            const Text('Add Money',
+                style: TextStyle(
+                    color: Colors.white, fontSize: 17)),
+            const SizedBox(height: 4),
+            const Text(
+                'Amount will be added to your current total',
+                style: TextStyle(
+                    color: Color(0xFF6B7C75), fontSize: 12)),
+            const SizedBox(height: 20),
 
-              // Toggle Add / Set
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setSheetState(() {
-                          isAdding = true;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isAdding
-                              ? const Color(0xFF3DDB6F)
-                              : const Color(0xFF111411),
-                          borderRadius:
-                              BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Add Money',
-                            style: TextStyle(
-                              color: isAdding
-                                  ? Colors.black
-                                  : const Color(0xFF6B7C75),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setSheetState(() {
-                          isAdding = false;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10),
-                        decoration: BoxDecoration(
-                          color: !isAdding
-                              ? const Color(0xFF3DDB6F)
-                              : const Color(0xFF111411),
-                          borderRadius:
-                              BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Set Amount',
-                            style: TextStyle(
-                              color: !isAdding
-                                  ? Colors.black
-                                  : const Color(0xFF6B7C75),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            const Text('Amount to Add',
+                style: TextStyle(
+                    color: Color(0xFFB0C4B8), fontSize: 13)),
+            const SizedBox(height: 8),
+            // ✅ Empty controller — no pre-filled amount
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 15),
+              decoration:
+                  _inputDecoration('0.00', prefix: '₱ '),
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-              Text(
-                isAdding
-                    ? 'Amount to Add'
-                    : 'Set Total Money',
-                style: const TextStyle(
-                    color: Color(0xFFB0C4B8), fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 15),
-                decoration:
-                    _inputDecoration('0.00', prefix: '₱ '),
-              ),
+            const Text('Note (optional)',
+                style: TextStyle(
+                    color: Color(0xFFB0C4B8),
+                    fontSize: 13)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: noteController,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 15),
+              decoration: _inputDecoration(
+                  'e.g. Salary, allowance...'),
+            ),
 
-              const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
-              const Text('Note (optional)',
-                  style: TextStyle(
-                      color: Color(0xFFB0C4B8),
-                      fontSize: 13)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: noteController,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 15),
-                decoration: _inputDecoration(
-                    'e.g. Salary, allowance...'),
-              ),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (amountController.text.isNotEmpty) {
+                    final amount = double.parse(
+                        amountController.text);
+                    final note =
+                        noteController.text.isEmpty
+                            ? 'Added money'
+                            : noteController.text.trim();
 
-              const SizedBox(height: 24),
+                    await _firestoreService.addMoney(
+                      widget.userId,
+                      amount,
+                      note,
+                    );
 
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (amountController.text.isNotEmpty) {
-                      final amount = double.parse(
-                          amountController.text);
-                      final note =
-                          noteController.text.isEmpty
-                              ? (isAdding
-                                  ? 'Added money'
-                                  : 'Set total money')
-                              : noteController.text.trim();
-
-                      if (isAdding) {
-                        await _firestoreService.addMoney(
-                          widget.userId,
-                          amount,
-                          note,
-                        );
-                      } else {
-                        await _firestoreService
-                            .setTotalMoney(
-                          widget.userId,
-                          amount,
-                        );
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(widget.userId)
-                            .collection('moneyHistory')
-                            .add({
-                          'type': 'set',
-                          'amount': amount,
-                          'note': note,
-                          'createdAt': DateTime.now()
-                              .toIso8601String(),
-                        });
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
+                    if (context.mounted) {
+                      Navigator.pop(context);
                     }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3DDB6F),
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    isAdding ? 'Add Money' : 'Set Amount',
-                    style: const TextStyle(fontSize: 16),
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3DDB6F),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
+                child: const Text('Add Money',
+                    style: TextStyle(fontSize: 16)),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Separate sheet for Edit — opens directly on Set Amount
+  void _showEditMoneySheet(double currentAmount) {
+    // ✅ Pre-filled with current amount for editing
+    final amountController = TextEditingController(
+        text: currentAmount > 0
+            ? currentAmount.toStringAsFixed(2)
+            : '');
+    final noteController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A2A1F),
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A3A2F),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text('Edit Total Money',
+                style: TextStyle(
+                    color: Colors.white, fontSize: 17)),
+            const SizedBox(height: 4),
+            const Text(
+                'This will replace your current total money',
+                style: TextStyle(
+                    color: Color(0xFF6B7C75), fontSize: 12)),
+            const SizedBox(height: 20),
+
+            const Text('Set Total Money',
+                style: TextStyle(
+                    color: Color(0xFFB0C4B8), fontSize: 13)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 15),
+              decoration:
+                  _inputDecoration('0.00', prefix: '₱ '),
+            ),
+
+            const SizedBox(height: 16),
+
+            const Text('Note (optional)',
+                style: TextStyle(
+                    color: Color(0xFFB0C4B8),
+                    fontSize: 13)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: noteController,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 15),
+              decoration:
+                  _inputDecoration('e.g. Updated budget...'),
+            ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (amountController.text.isNotEmpty) {
+                    final amount = double.parse(
+                        amountController.text);
+                    final note =
+                        noteController.text.isEmpty
+                            ? 'Set total money'
+                            : noteController.text.trim();
+
+                    await _firestoreService.setTotalMoney(
+                      widget.userId,
+                      amount,
+                    );
+
+                    // Save to history
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(widget.userId)
+                        .collection('moneyHistory')
+                        .add({
+                      'type': 'set',
+                      'amount': amount,
+                      'note': note,
+                      'createdAt':
+                          DateTime.now().toIso8601String(),
+                    });
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF60A5FA),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Save Amount',
+                    style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -287,64 +329,38 @@ class _ManageMoneyScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // Header
+                // Header — ✅ removed + Add/Set button
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 16),
                   child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () =>
-                                Navigator.pop(context),
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFF1A2A1F),
-                                borderRadius:
-                                    BorderRadius.circular(
-                                        10),
-                                border: Border.all(
-                                    color: const Color(
-                                        0xFF2A3A2F)),
-                              ),
-                              child: const Icon(
-                                  Icons.arrow_back_ios_new,
-                                  color: Colors.white,
-                                  size: 16),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          const Text('My Money',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20)),
-                        ],
-                      ),
                       GestureDetector(
                         onTap: () =>
-                            _showSetMoneySheet(totalMoney),
+                            Navigator.pop(context),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3DDB6F),
+                            color:
+                                const Color(0xFF1A2A1F),
                             borderRadius:
                                 BorderRadius.circular(10),
+                            border: Border.all(
+                                color: const Color(
+                                    0xFF2A3A2F)),
                           ),
-                          child: const Text(
-                            '+ Add / Set',
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 13),
-                          ),
+                          child: const Icon(
+                              Icons.arrow_back_ios_new,
+                              color: Colors.white,
+                              size: 16),
                         ),
                       ),
+                      const SizedBox(width: 14),
+                      const Text('My Money',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20)),
                     ],
                   ),
                 ),
@@ -381,21 +397,21 @@ class _ManageMoneyScreenState
                         const SizedBox(height: 16),
                         Row(
                           children: [
+                            // ✅ Add Money → opens add sheet
                             _quickAction(
                               label: 'Add Money',
                               icon: Icons.add_circle_outline,
                               color: const Color(0xFF3DDB6F),
-                              onTap: () =>
-                                  _showSetMoneySheet(
-                                      totalMoney),
+                              onTap: _showAddMoneySheet,
                             ),
                             const SizedBox(width: 12),
+                            // ✅ Edit Amount → opens edit sheet
                             _quickAction(
                               label: 'Edit Amount',
                               icon: Icons.edit_outlined,
                               color: const Color(0xFF60A5FA),
                               onTap: () =>
-                                  _showSetMoneySheet(
+                                  _showEditMoneySheet(
                                       totalMoney),
                             ),
                           ],
@@ -458,7 +474,7 @@ class _ManageMoneyScreenState
                                       fontSize: 15)),
                               const SizedBox(height: 4),
                               const Text(
-                                  'Tap "+ Add / Set" to add your money',
+                                  'Tap "Add Money" to get started',
                                   style: TextStyle(
                                       color: Color(0xFF6B7C75),
                                       fontSize: 13)),
@@ -502,7 +518,8 @@ class _ManageMoneyScreenState
                                   color: Colors.white,
                                   size: 22),
                             ),
-                            confirmDismiss: (direction) async {
+                            confirmDismiss:
+                                (direction) async {
                               bool confirm = false;
                               await showDialog(
                                 context: context,
@@ -510,7 +527,8 @@ class _ManageMoneyScreenState
                                     AlertDialog(
                                   backgroundColor:
                                       const Color(0xFF1A2A1F),
-                                  shape: RoundedRectangleBorder(
+                                  shape:
+                                      RoundedRectangleBorder(
                                     borderRadius:
                                         BorderRadius.circular(
                                             16),
@@ -518,20 +536,23 @@ class _ManageMoneyScreenState
                                   title: const Text(
                                       'Delete History',
                                       style: TextStyle(
-                                          color: Colors.white)),
+                                          color:
+                                              Colors.white)),
                                   content: Text(
                                     isAdd
                                         ? 'Delete this entry?\n\n₱${amount.toStringAsFixed(2)} will be deducted from your total money.'
                                         : 'Delete this "Set Amount" entry?\n\nYour current total money will not change.',
                                     style: const TextStyle(
-                                        color: Color(0xFF6B7C75),
+                                        color:
+                                            Color(0xFF6B7C75),
                                         height: 1.5),
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
                                         confirm = false;
-                                        Navigator.pop(context);
+                                        Navigator.pop(
+                                            context);
                                       },
                                       child: const Text(
                                           'Cancel',
@@ -542,7 +563,8 @@ class _ManageMoneyScreenState
                                     ElevatedButton(
                                       onPressed: () {
                                         confirm = true;
-                                        Navigator.pop(context);
+                                        Navigator.pop(
+                                            context);
                                       },
                                       style: ElevatedButton
                                           .styleFrom(
@@ -555,19 +577,20 @@ class _ManageMoneyScreenState
                                             RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius
-                                                  .circular(10),
+                                                  .circular(
+                                                      10),
                                         ),
                                       ),
-                                      child:
-                                          const Text('Delete'),
+                                      child: const Text(
+                                          'Delete'),
                                     ),
                                   ],
                                 ),
                               );
                               return confirm;
                             },
-                            onDismissed: (direction) async {
-                              // Delete and reverse money if it was 'add' type
+                            onDismissed:
+                                (direction) async {
                               await _firestoreService
                                   .deleteMoneyHistory(
                                 widget.userId,

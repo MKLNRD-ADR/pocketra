@@ -17,29 +17,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
   final _user = FirebaseAuth.instance.currentUser;
 
-  // Gets first name from display name or email
-  String _getFirstName(String? displayName, String? email) {
-    if (displayName != null && displayName.isNotEmpty) {
-      return displayName.split(' ').first;
-    }
-    if (email != null) return email.split('@').first;
-    return 'there';
-  }
-
-  // Gets initials for avatar
-  String _getInitials(String? displayName, String? email) {
-    if (displayName != null && displayName.isNotEmpty) {
-      final parts = displayName.split(' ');
+  String _getInitials(String? name, String? email) {
+    if (name != null && name.isNotEmpty) {
+      final parts = name.split(' ');
       if (parts.length >= 2) {
         return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
       }
-      return displayName[0].toUpperCase();
+      return name[0].toUpperCase();
     }
     if (email != null) return email[0].toUpperCase();
     return 'U';
   }
 
-  // Shows edit name dialog
   void _showEditNameDialog(String currentName) {
     final nameController =
         TextEditingController(text: currentName);
@@ -56,6 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: TextField(
           controller: nameController,
           style: const TextStyle(color: Colors.white),
+          autofocus: true,
           decoration: InputDecoration(
             hintText: 'Your name',
             hintStyle:
@@ -83,21 +73,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF6B7C75))),
+                style:
+                    TextStyle(color: Color(0xFF6B7C75))),
           ),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.trim().isNotEmpty) {
-                // Update in Firestore
+                // ✅ Update Firestore
                 await FirebaseFirestore.instance
                     .collection('users')
                     .doc(widget.userId)
                     .update({
                   'name': nameController.text.trim(),
                 });
-                // Update display name in Firebase Auth
+                // ✅ Update Firebase Auth display name
                 await _user?.updateDisplayName(
                     nameController.text.trim());
+                // ✅ Reload user so changes reflect
+                await _user?.reload();
                 if (context.mounted) {
                   Navigator.pop(context);
                 }
@@ -117,7 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Shows logout confirmation dialog
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -135,7 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF6B7C75))),
+                style:
+                    TextStyle(color: Color(0xFF6B7C75))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -165,11 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final firstName =
-        _getFirstName(_user?.displayName, _user?.email);
-    final initials =
-        _getInitials(_user?.displayName, _user?.email);
-
     return Scaffold(
       backgroundColor: const Color(0xFF111411),
       body: SafeArea(
@@ -192,7 +180,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius:
                             BorderRadius.circular(10),
                         border: Border.all(
-                            color: const Color(0xFF2A3A2F)),
+                            color:
+                                const Color(0xFF2A3A2F)),
                       ),
                       child: const Icon(
                           Icons.arrow_back_ios_new,
@@ -213,6 +202,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 20),
+                // ✅ StreamBuilder watches Firestore in real-time
+                // Name updates immediately when changed
                 child: StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('users')
@@ -221,14 +212,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   builder: (context, snapshot) {
                     final data = snapshot.data?.data()
                         as Map<String, dynamic>?;
+
+                    // ✅ Always read from Firestore first
                     final name = data?['name'] ??
                         _user?.displayName ??
-                        firstName;
+                        '';
                     final email = data?['email'] ??
                         _user?.email ??
                         '';
                     final createdAt =
                         data?['createdAt'] ?? '';
+                    final initials =
+                        _getInitials(name, email);
 
                     return Column(
                       children: [
@@ -243,7 +238,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: const Color(0xFF3DDB6F),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF2A3A2F),
+                              color:
+                                  const Color(0xFF2A3A2F),
                               width: 3,
                             ),
                           ),
@@ -260,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Name
+                        // ✅ Name from Firestore stream
                         Text(name,
                             style: const TextStyle(
                                 color: Colors.white,
@@ -268,7 +264,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 4),
 
-                        // Email
                         Text(email,
                             style: const TextStyle(
                                 color: Color(0xFF6B7C75),
@@ -276,7 +271,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Member since
                         if (createdAt.isNotEmpty)
                           Container(
                             padding:
@@ -284,7 +278,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     horizontal: 12,
                                     vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1A2A1F),
+                              color:
+                                  const Color(0xFF1A2A1F),
                               borderRadius:
                                   BorderRadius.circular(20),
                               border: Border.all(
@@ -301,11 +296,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Account settings section
                         _sectionLabel('ACCOUNT'),
                         const SizedBox(height: 8),
 
-                        // Edit name
                         _settingsTile(
                           icon: Icons.person_outline,
                           label: 'Edit Name',
@@ -314,7 +307,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _showEditNameDialog(name),
                         ),
 
-                        // Email (non-editable)
                         _settingsTile(
                           icon: Icons.email_outlined,
                           label: 'Email',
@@ -324,11 +316,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 24),
 
-                        // App section
                         _sectionLabel('APP'),
                         const SizedBox(height: 8),
 
-                        // Currency
                         _settingsTile(
                           icon: Icons.attach_money,
                           label: 'Currency',
@@ -336,9 +326,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: null,
                         ),
 
-                        // Notifications
                         _settingsTile(
-                          icon: Icons.notifications_outlined,
+                          icon:
+                              Icons.notifications_outlined,
                           label: 'Notifications',
                           value: 'Coming soon',
                           onTap: null,
@@ -346,7 +336,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 24),
 
-                        // About section
                         _sectionLabel('ABOUT'),
                         const SizedBox(height: 8),
 
@@ -366,7 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Logout button
                         SizedBox(
                           width: double.infinity,
                           height: 54,
@@ -384,7 +372,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const Color(0xFF2A1A1A),
                               shape: RoundedRectangleBorder(
                                 borderRadius:
-                                    BorderRadius.circular(14),
+                                    BorderRadius.circular(
+                                        14),
                                 side: const BorderSide(
                                     color:
                                         Color(0xFFF87171)),
@@ -424,8 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       alignment: Alignment.centerLeft,
       child: Text(label,
           style: const TextStyle(
-              color: Color(0xFF6B7C75),
-              fontSize: 11)),
+              color: Color(0xFF6B7C75), fontSize: 11)),
     );
   }
 
@@ -462,11 +450,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(label,
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 14)),
+                          color: Colors.white,
+                          fontSize: 14)),
                   if (value.isNotEmpty)
                     Text(value,
                         style: const TextStyle(
