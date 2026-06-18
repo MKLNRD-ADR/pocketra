@@ -307,7 +307,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             title: const Text('Delete Transaction',
                 style: TextStyle(color: Colors.white)),
             content: Text(
-                'Delete "$title"?\n\nThis amount will be restored to your balance.',
+                'Delete "$title"?\n\nThis amount will be removed from this section\'s spent total. Your total money will not change.',
                 style: const TextStyle(
                     color: Color(0xFF6B7C75),
                     height: 1.5)),
@@ -343,7 +343,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return confirm;
       },
       onDismissed: (direction) async {
-        // Restores money to pocket spent AND total money
         await _firestoreService.deleteTransaction(
           widget.userId,
           pocketId,

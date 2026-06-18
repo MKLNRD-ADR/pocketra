@@ -45,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title:
             const Text('Delete Section', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Delete "$pocketName"?\n\nAny money spent in this section will be restored to your total balance.',
+          'Delete "$pocketName"?\n\nThis removes the section and its expenses. Your total money will not change.',
           style: const TextStyle(color: Color(0xFF6B7C75), height: 1.5),
         ),
         actions: [

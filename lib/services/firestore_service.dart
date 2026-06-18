@@ -47,18 +47,6 @@ class FirestoreService {
     });
   }
 
-  Future<void> deductFromTotal(String userId, double amount) async {
-    await _db.collection('users').doc(userId).set({
-      'totalMoney': FieldValue.increment(-amount),
-    }, SetOptions(merge: true));
-  }
-
-  Future<void> restoreToTotal(String userId, double amount) async {
-    await _db.collection('users').doc(userId).set({
-      'totalMoney': FieldValue.increment(amount),
-    }, SetOptions(merge: true));
-  }
-
   Stream<QuerySnapshot> getMoneyHistory(String userId) {
     return _db
         .collection('users')
@@ -116,21 +104,6 @@ class FirestoreService {
   }
 
   Future<void> deletePocket(String userId, String pocketId) async {
-    final pocketDoc = await _db
-        .collection('users')
-        .doc(userId)
-        .collection('pockets')
-        .doc(pocketId)
-        .get();
-
-    if (pocketDoc.exists) {
-      final data = pocketDoc.data() as Map<String, dynamic>;
-      final spent = (data['spent'] ?? 0).toDouble();
-      if (spent > 0) {
-        await restoreToTotal(userId, spent);
-      }
-    }
-
     await _db
         .collection('users')
         .doc(userId)
@@ -185,11 +158,10 @@ class FirestoreService {
         .collection('pockets')
         .doc(pocketId);
 
-    final userRef = _db.collection('users').doc(userId);
-
     batch.set(txRef, txData);
-    batch.update(pocketRef, {'spent': FieldValue.increment(transaction['amount'])});
-    batch.update(userRef, {'totalMoney': FieldValue.increment(-transaction['amount'].toDouble())});
+    batch.update(pocketRef, {
+      'spent': FieldValue.increment(transaction['amount']),
+    });
 
     // ✅ Commit all at once → triggers all streams simultaneously
     await batch.commit();
@@ -217,11 +189,8 @@ class FirestoreService {
         .collection('pockets')
         .doc(pocketId);
 
-    final userRef = _db.collection('users').doc(userId);
-
     batch.delete(txRef);
     batch.update(pocketRef, {'spent': FieldValue.increment(-amount)});
-    batch.update(userRef, {'totalMoney': FieldValue.increment(amount)});
 
     await batch.commit();
   }
