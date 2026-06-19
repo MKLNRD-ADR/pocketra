@@ -20,9 +20,8 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Animation setup
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
@@ -38,23 +37,34 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.elasticOut,
     ));
 
-    // Start animation
     _controller.forward();
+    _navigate();
+  }
 
-    // Navigate after 2.5 seconds
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        final user = FirebaseAuth.instance.currentUser;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => user != null
-                ? const DashboardScreen()
-                : const LoginScreen(),
-          ),
-        );
-      }
-    });
+  Future<void> _navigate() async {
+    // ✅ Wait for animation to finish (1.2s)
+    // then immediately check auth — no extra delay
+    await Future.delayed(const Duration(milliseconds: 1200));
+
+    if (!mounted) return;
+
+    // ✅ Listen to auth state ONCE
+    // This waits for Firebase to confirm login state
+    // instead of guessing with currentUser
+    final user = await FirebaseAuth.instance
+        .authStateChanges()
+        .first;
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => user != null
+            ? const DashboardScreen()
+            : const LoginScreen(),
+      ),
+    );
   }
 
   @override
@@ -76,7 +86,8 @@ class _SplashScreenState extends State<SplashScreen>
               child: ScaleTransition(
                 scale: _scaleAnimation,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
                   children: [
 
                     // App icon
@@ -97,7 +108,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                     const SizedBox(height: 24),
 
-                    // App name
                     const Text(
                       'Pocketra',
                       style: TextStyle(
@@ -108,7 +118,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                     const SizedBox(height: 8),
 
-                    // Tagline
                     const Text(
                       'Your personal budget tracker',
                       style: TextStyle(
@@ -119,7 +128,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                     const SizedBox(height: 60),
 
-                    // Loading indicator
                     const SizedBox(
                       width: 24,
                       height: 24,

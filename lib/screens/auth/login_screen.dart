@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,8 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // Cleans up controllers when screen is closed
-  // Prevents memory leaks
   @override
   void dispose() {
     _emailController.dispose();
@@ -26,9 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Handles login with email and password
   Future<void> _handleLogin() async {
-    // Validation — check if fields are empty
     if (_emailController.text.trim().isEmpty) {
       _showError('Please enter your email');
       return;
@@ -40,16 +37,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // Call Firebase login
       await _authService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Navigate to dashboard on success
       if (mounted && context.mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+              builder: (_) => const DashboardScreen()),
         );
       }
     } catch (e) {
@@ -59,7 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Handles Google Sign In
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
     try {
@@ -67,7 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted && context.mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          MaterialPageRoute(
+              builder: (_) => const DashboardScreen()),
         );
       }
     } catch (e) {
@@ -77,7 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Shows a red error message at the bottom of the screen
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -138,9 +133,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 12),
 
-              const Text('Log in to keep your money on track.',
+              const Text(
+                  'Log in to keep your money on track.',
                   style: TextStyle(
-                      color: Color(0xFF6B7C75), fontSize: 15)),
+                      color: Color(0xFF6B7C75),
+                      fontSize: 15)),
 
               const SizedBox(height: 40),
 
@@ -173,18 +170,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     size: 20,
                   ),
                   onPressed: () => setState(
-                      () => _obscurePassword = !_obscurePassword),
+                      () => _obscurePassword =
+                          !_obscurePassword),
                 ),
               ),
 
-              // Forgot password
+              const SizedBox(height: 8),
+
+              // ✅ Forgot password — now navigates to screen
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
                   child: const Text('Forgot password?',
                       style: TextStyle(
-                          color: Color(0xFF3DDB6F), fontSize: 13)),
+                          color: Color(0xFF3DDB6F),
+                          fontSize: 13)),
                 ),
               ),
 
@@ -195,14 +204,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
+                  onPressed:
+                      _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3DDB6F),
+                    backgroundColor:
+                        const Color(0xFF3DDB6F),
                     disabledBackgroundColor:
                         const Color(0xFF1A3A2A),
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius:
+                          BorderRadius.circular(14),
                     ),
                   ),
                   child: _isLoading
@@ -222,7 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                     fontSize: 16)),
                             SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 18),
+                            Icon(Icons.arrow_forward,
+                                size: 18),
                           ],
                         ),
                 ),
@@ -231,19 +244,22 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 28),
 
               // Divider
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Expanded(
-                      child: Divider(color: Color(0xFF2A3A2F))),
+                      child: Divider(
+                          color: Color(0xFF2A3A2F))),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 12),
                     child: Text('Or continue with',
                         style: TextStyle(
                             color: Color(0xFF6B7C75),
                             fontSize: 13)),
                   ),
                   Expanded(
-                      child: Divider(color: Color(0xFF2A3A2F))),
+                      child: Divider(
+                          color: Color(0xFF2A3A2F))),
                 ],
               ),
 
@@ -275,7 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
               // Sign up link
               Center(
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
                   children: [
                     const Text('New to Pocketra? ',
                         style: TextStyle(
@@ -285,7 +302,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => const SignupScreen()),
+                            builder: (_) =>
+                                const SignupScreen()),
                       ),
                       child: const Text('Sign Up',
                           style: TextStyle(
@@ -305,8 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLabel(String text) {
     return Text(text,
         style: const TextStyle(
-            color: Color(0xFFB0C4B8),
-            fontSize: 13));
+            color: Color(0xFFB0C4B8), fontSize: 13));
   }
 
   Widget _buildTextField({
@@ -321,24 +338,26 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(
+          color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF4A5A50)),
-        prefixIcon:
-            Icon(icon, color: const Color(0xFF6B7C75), size: 20),
+        hintStyle:
+            const TextStyle(color: Color(0xFF4A5A50)),
+        prefixIcon: Icon(icon,
+            color: const Color(0xFF6B7C75), size: 20),
         suffixIcon: suffix,
         filled: true,
         fillColor: const Color(0xFF1A2A1F),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFF2A3A2F)),
+          borderSide: const BorderSide(
+              color: Color(0xFF2A3A2F)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: Color(0xFF2A3A2F)),
+          borderSide: const BorderSide(
+              color: Color(0xFF2A3A2F)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -358,11 +377,13 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: 20),
       label: Text(label,
-          style:
-              const TextStyle(color: Colors.white, fontSize: 14)),
+          style: const TextStyle(
+              color: Colors.white, fontSize: 14)),
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        side: const BorderSide(color: Color(0xFF2A3A2F)),
+        padding:
+            const EdgeInsets.symmetric(vertical: 14),
+        side: const BorderSide(
+            color: Color(0xFF2A3A2F)),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12)),
         backgroundColor: const Color(0xFF1A2A1F),
