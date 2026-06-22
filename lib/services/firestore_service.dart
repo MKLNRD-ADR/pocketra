@@ -31,46 +31,57 @@ class FirestoreService {
   }
 
   Future<void> addMoney(String userId, double amount, String note) async {
-    await _db.collection('users').doc(userId).set({
-      'totalMoney': FieldValue.increment(amount),
-    }, SetOptions(merge: true));
+  // ✅ Use batch so both writes happen together
+  // Works offline — both queued simultaneously
+  final batch = _db.batch();
 
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection('moneyHistory')
-        .add({
-      'type': 'add',
-      'amount': amount,
-      'note': note,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-  }
+  final userRef = _db.collection('users').doc(userId);
+  final historyRef = userRef.collection('moneyHistory').doc();
 
-  Stream<QuerySnapshot> getMoneyHistory(String userId) {
-    return _db
-        .collection('users')
-        .doc(userId)
-        .collection('moneyHistory')
-        .orderBy('createdAt', descending: true)
-        .snapshots();
-  }
+  batch.set(userRef, {
+    'totalMoney': FieldValue.increment(amount),
+  }, SetOptions(merge: true));
+
+  batch.set(historyRef, {
+    'type': 'add',
+    'amount': amount,
+    'note': note,
+    'createdAt': DateTime.now().toIso8601String(),
+  });
+
+  await batch.commit();
+}
+
+Stream<QuerySnapshot> getMoneyHistory(String userId) {
+  return _db
+      .collection('users')
+      .doc(userId)
+      .collection('moneyHistory')
+      .snapshots();
+}
 
   Future<void> deleteMoneyHistory(
-      String userId, String historyId, double amount, String type) async {
-    await _db
-        .collection('users')
-        .doc(userId)
-        .collection('moneyHistory')
-        .doc(historyId)
-        .delete();
+    String userId, String historyId, double amount, String type) async {
+  // ✅ Use batch so both writes happen together offline
+  final batch = _db.batch();
 
-    if (type == 'add') {
-      await _db.collection('users').doc(userId).set({
-        'totalMoney': FieldValue.increment(-amount),
-      }, SetOptions(merge: true));
-    }
+  final historyRef = _db
+      .collection('users')
+      .doc(userId)
+      .collection('moneyHistory')
+      .doc(historyId);
+
+  batch.delete(historyRef);
+
+  if (type == 'add') {
+    final userRef = _db.collection('users').doc(userId);
+    batch.set(userRef, {
+      'totalMoney': FieldValue.increment(-amount),
+    }, SetOptions(merge: true));
   }
+
+  await batch.commit();
+}
 
   // ─────────────────────────────────────────
   // POCKETS

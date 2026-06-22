@@ -36,14 +36,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showDeletePocketDialog(
-      BuildContext context, String pocketId, String pocketName) {
+    BuildContext context,
+    String pocketId,
+    String pocketName,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A2A1F),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title:
-            const Text('Delete Section', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Delete Section',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Text(
           'Delete "$pocketName"?\n\nThis removes the section and its expenses. Your total money will not change.',
           style: const TextStyle(color: Color(0xFF6B7C75), height: 1.5),
@@ -51,19 +56,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF6B7C75))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF6B7C75)),
+            ),
           ),
           ElevatedButton(
-            onPressed: () async {
-              await _firestoreService.deletePocket(_user!.uid, pocketId);
-              if (context.mounted) Navigator.pop(context);
+            onPressed: () {
+              Navigator.pop(context);
+              _firestoreService.deletePocket(_user!.uid, pocketId);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF87171),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Delete'),
           ),
@@ -108,11 +116,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Add New Section',
-                  style: TextStyle(color: Colors.white, fontSize: 17)),
+              const Text(
+                'Add New Section',
+                style: TextStyle(color: Colors.white, fontSize: 17),
+              ),
               const SizedBox(height: 20),
-              const Text('Section Name',
-                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
+              const Text(
+                'Section Name',
+                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: nameController,
@@ -120,8 +132,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: _inputDecoration('e.g. Food & Snacks'),
               ),
               const SizedBox(height: 16),
-              const Text('Budget',
-                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
+              const Text(
+                'Budget',
+                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: budgetController,
@@ -131,13 +145,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               if (errorMessage != null) ...[
                 const SizedBox(height: 8),
-                Text(errorMessage!,
-                    style: const TextStyle(
-                        color: Color(0xFFF87171), fontSize: 12)),
+                Text(
+                  errorMessage!,
+                  style: const TextStyle(
+                    color: Color(0xFFF87171),
+                    fontSize: 12,
+                  ),
+                ),
               ],
               const SizedBox(height: 16),
-              const Text('Color',
-                  style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13)),
+              const Text(
+                'Color',
+                style: TextStyle(color: Color(0xFFB0C4B8), fontSize: 13),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 36,
@@ -170,8 +190,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     if (nameController.text.isNotEmpty &&
                         budgetController.text.isNotEmpty) {
                       final newBudget = double.parse(budgetController.text);
-                      final totalReserved =
-                          await _firestoreService.getTotalReserved(_user!.uid);
+                      final totalReserved = await _firestoreService
+                          .getTotalReserved(_user!.uid);
                       final available = totalMoney - totalReserved;
 
                       if (newBudget > available) {
@@ -182,24 +202,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         return;
                       }
 
-                      await _firestoreService.addPocket(_user.uid, {
+                      // ✅ Pop first then write in background
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+
+                      _firestoreService.addPocket(_user.uid, {
                         'name': nameController.text.trim().toUpperCase(),
                         'budget': newBudget,
                         'spent': 0.0,
                         'colorIndex': selectedColor,
                         'createdAt': DateTime.now().toIso8601String(),
                       });
-                      if (context.mounted) Navigator.pop(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3DDB6F),
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  child: const Text('Create Section',
-                      style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    'Create Section',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
             ],
@@ -245,8 +272,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final totalMoney = (userData['totalMoney'] ?? 0).toDouble();
             final userName = userData['name'] as String?;
             final firstName = _getFirstName(userName, _user.email);
-            final initial =
-                firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
+            final initial = firstName.isNotEmpty
+                ? firstName[0].toUpperCase()
+                : '?';
 
             return StreamBuilder<QuerySnapshot>(
               stream: _firestoreService.getPockets(_user.uid),
@@ -281,33 +309,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               CircleAvatar(
                                 radius: 20,
                                 backgroundColor: const Color(0xFF3DDB6F),
-                                child: Text(initial,
-                                    style: const TextStyle(
-                                        color: Colors.black)),
+                                child: Text(
+                                  initial,
+                                  style: const TextStyle(color: Colors.black),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Hey $firstName!',
-                                      style: const TextStyle(
-                                          color: Color(0xFF6B7C75),
-                                          fontSize: 12)),
-                                  const Text('Your Wallet',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 15)),
+                                  Text(
+                                    'Hey $firstName!',
+                                    style: const TextStyle(
+                                      color: Color(0xFF6B7C75),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Your Wallet',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.settings_outlined,
-                                color: Color(0xFF6B7C75)),
+                            icon: const Icon(
+                              Icons.settings_outlined,
+                              color: Color(0xFF6B7C75),
+                            ),
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) =>
-                                      ProfileScreen(userId: _user.uid)),
+                                builder: (_) =>
+                                    ProfileScreen(userId: _user.uid),
+                              ),
                             ),
                           ),
                         ],
@@ -327,11 +366,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _balanceStat('TOTAL MONEY',
-                                    '₱${totalMoney.toStringAsFixed(2)}'),
+                                _balanceStat(
+                                  'TOTAL MONEY',
+                                  '₱${totalMoney.toStringAsFixed(2)}',
+                                ),
                                 _balanceStat(
                                   'LEFT TO SPEND',
                                   '₱${totalRemaining.toStringAsFixed(2)}',
@@ -341,18 +381,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 12),
                             Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'SPENT: ₱${totalSpent.toStringAsFixed(2)}',
                                   style: const TextStyle(
-                                      color: Color(0xFF6B7C75), fontSize: 11),
+                                    color: Color(0xFF6B7C75),
+                                    fontSize: 11,
+                                  ),
                                 ),
                                 Text(
                                   '${(progress * 100).toStringAsFixed(1)}% REMAINING',
                                   style: const TextStyle(
-                                      color: Color(0xFF3DDB6F), fontSize: 11),
+                                    color: Color(0xFF3DDB6F),
+                                    fontSize: 11,
+                                  ),
                                 ),
                               ],
                             ),
@@ -362,9 +405,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: LinearProgressIndicator(
                                 value: progress,
                                 backgroundColor: const Color(0xFF2A3A2F),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF3DDB6F)),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF3DDB6F),
+                                ),
                                 minHeight: 6,
                               ),
                             ),
@@ -378,14 +421,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('My Pockets',
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 17)),
+                          const Text(
+                            'My Pockets',
+                            style: TextStyle(color: Colors.white, fontSize: 17),
+                          ),
                           TextButton(
                             onPressed: () => _showAddPocketSheet(totalMoney),
-                            child: const Text('Add Section',
-                                style: TextStyle(
-                                    color: Color(0xFF3DDB6F), fontSize: 13)),
+                            child: const Text(
+                              'Add Section',
+                              style: TextStyle(
+                                color: Color(0xFF3DDB6F),
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -396,68 +444,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       snapshot.connectionState == ConnectionState.waiting
                           ? const Center(
                               child: CircularProgressIndicator(
-                                  color: Color(0xFF3DDB6F)))
+                                color: Color(0xFF3DDB6F),
+                              ),
+                            )
                           : pockets.isEmpty
-                              ? _emptyPockets()
-                              : GridView.builder(
-                                  shrinkWrap: true,
-                                  physics:
-                                      const NeverScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                          ? _emptyPockets()
+                          : GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
                                     crossAxisSpacing: 12,
                                     mainAxisSpacing: 12,
                                     childAspectRatio: 1.4,
                                   ),
-                                  itemCount: pockets.length,
-                                  itemBuilder: (context, i) {
-                                    final data = pockets[i].data()
-                                        as Map<String, dynamic>;
-                                    final pocketId = pockets[i].id;
-                                    final budget =
-                                        (data['budget'] ?? 0).toDouble();
-                                    final spent =
-                                        (data['spent'] ?? 0).toDouble();
-                                    final remaining = budget - spent;
-                                    final progress = budget > 0
-                                        ? (remaining / budget)
-                                            .clamp(0.0, 1.0)
-                                        : 0.0;
-                                    final colorIndex =
-                                        (data['colorIndex'] ?? i) %
-                                            _pocketColors.length;
-                                    final color = _pocketColors[colorIndex];
+                              itemCount: pockets.length,
+                              itemBuilder: (context, i) {
+                                final data =
+                                    pockets[i].data() as Map<String, dynamic>;
+                                final pocketId = pockets[i].id;
+                                final budget = (data['budget'] ?? 0).toDouble();
+                                final spent = (data['spent'] ?? 0).toDouble();
+                                final remaining = budget - spent;
+                                final progress = budget > 0
+                                    ? (remaining / budget).clamp(0.0, 1.0)
+                                    : 0.0;
+                                final colorIndex =
+                                    (data['colorIndex'] ?? i) %
+                                    _pocketColors.length;
+                                final color = _pocketColors[colorIndex];
 
-                                    return GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => PocketDetailScreen(
-                                            pocketId: pocketId,
-                                            userId: _user.uid,
-                                            name: data['name'] ?? '',
-                                            color: color,
-                                            startingBalance: budget,
-                                            spent: spent,
-                                          ),
-                                        ),
+                                return GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PocketDetailScreen(
+                                        pocketId: pocketId,
+                                        userId: _user.uid,
+                                        name: data['name'] ?? '',
+                                        color: color,
+                                        startingBalance: budget,
+                                        spent: spent,
                                       ),
-                                      onLongPress: () =>
-                                          _showDeletePocketDialog(
-                                        context,
-                                        pocketId,
-                                        data['name'] ?? '',
-                                      ),
-                                      child: _pocketCard(
-                                        data['name'] ?? '',
-                                        remaining,
-                                        progress.toDouble(),
-                                        color,
-                                      ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  ),
+                                  onLongPress: () => _showDeletePocketDialog(
+                                    context,
+                                    pocketId,
+                                    data['name'] ?? '',
+                                  ),
+                                  child: _pocketCard(
+                                    data['name'] ?? '',
+                                    remaining,
+                                    progress.toDouble(),
+                                    color,
+                                  ),
+                                );
+                              },
+                            ),
 
                       const SizedBox(height: 28),
 
@@ -465,19 +510,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Recent Spend',
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 17)),
+                          const Text(
+                            'Recent Spend',
+                            style: TextStyle(color: Colors.white, fontSize: 17),
+                          ),
                           TextButton(
                             onPressed: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) =>
-                                      HistoryScreen(userId: _user.uid)),
+                                builder: (_) =>
+                                    HistoryScreen(userId: _user.uid),
+                              ),
                             ),
-                            child: const Text('All Activity',
-                                style: TextStyle(
-                                    color: Color(0xFF3DDB6F), fontSize: 13)),
+                            child: const Text(
+                              'All Activity',
+                              style: TextStyle(
+                                color: Color(0xFF3DDB6F),
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -499,7 +550,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Padding(
                                 padding: EdgeInsets.all(16),
                                 child: CircularProgressIndicator(
-                                    color: Color(0xFF3DDB6F)),
+                                  color: Color(0xFF3DDB6F),
+                                ),
                               ),
                             );
                           }
@@ -513,7 +565,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: Text(
                                   'No transactions yet',
                                   style: TextStyle(
-                                      color: Color(0xFF6B7C75), fontSize: 13),
+                                    color: Color(0xFF6B7C75),
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             );
@@ -557,11 +611,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: const Column(
         children: [
-          Text('No pockets yet',
-              style: TextStyle(color: Colors.white, fontSize: 15)),
+          Text(
+            'No pockets yet',
+            style: TextStyle(color: Colors.white, fontSize: 15),
+          ),
           SizedBox(height: 4),
-          Text('Tap "Add Section" to create one',
-              style: TextStyle(color: Color(0xFF6B7C75), fontSize: 13)),
+          Text(
+            'Tap "Add Section" to create one',
+            style: TextStyle(color: Color(0xFF6B7C75), fontSize: 13),
+          ),
         ],
       ),
     );
@@ -571,9 +629,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style:
-                const TextStyle(color: Color(0xFF6B7C75), fontSize: 10)),
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF6B7C75), fontSize: 10),
+        ),
         const SizedBox(height: 4),
         Text(
           amount,
@@ -587,7 +646,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _pocketCard(
-      String name, double remaining, double progress, Color color) {
+    String name,
+    double remaining,
+    double progress,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -602,7 +665,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(
             name,
             style: const TextStyle(
-                color: Colors.white, fontSize: 15, height: 1.2),
+              color: Colors.white,
+              fontSize: 15,
+              height: 1.2,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -611,13 +677,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Row(
                 children: [
-                  Text('₱${remaining.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 12)),
+                  Text(
+                    '₱${remaining.toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                   const SizedBox(width: 4),
-                  const Text('left',
-                      style: TextStyle(
-                          color: Color(0xFF6B7C75), fontSize: 11)),
+                  const Text(
+                    'left',
+                    style: TextStyle(color: Color(0xFF6B7C75), fontSize: 11),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -637,8 +705,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _recentTransactionTile(String txId, String pocketId,
-      String title, String pocket, double amount) {
+  Widget _recentTransactionTile(
+    String txId,
+    String pocketId,
+    String title,
+    String pocket,
+    double amount,
+  ) {
     return Dismissible(
       key: Key(txId),
       direction: DismissDirection.endToStart,
@@ -659,19 +732,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context) => AlertDialog(
             backgroundColor: const Color(0xFF1A2A1F),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
-            title: const Text('Delete Transaction',
-                style: TextStyle(color: Colors.white)),
-            content: Text('Delete "$title"?',
-                style: const TextStyle(color: Color(0xFF6B7C75))),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Delete Transaction',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'Delete "$title"?',
+              style: const TextStyle(color: Color(0xFF6B7C75)),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   confirm = false;
                   Navigator.pop(context);
                 },
-                child: const Text('Cancel',
-                    style: TextStyle(color: Color(0xFF6B7C75))),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xFF6B7C75)),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -682,7 +762,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   backgroundColor: const Color(0xFFF87171),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Text('Delete'),
               ),
@@ -693,12 +774,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       onDismissed: (direction) async {
         await _firestoreService.deleteTransaction(
-            _user!.uid, pocketId, txId, amount);
+          _user!.uid,
+          pocketId,
+          txId,
+          amount,
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFF1A2A1F),
           borderRadius: BorderRadius.circular(14),
@@ -713,34 +797,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFF2A3A2F),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.receipt_outlined,
-                  color: Color(0xFF6B7C75), size: 18),
+              child: const Icon(
+                Icons.receipt_outlined,
+                color: Color(0xFF6B7C75),
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 14)),
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                   const SizedBox(height: 2),
-                  Text(pocket,
-                      style: const TextStyle(
-                          color: Color(0xFF6B7C75), fontSize: 12)),
+                  Text(
+                    pocket,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7C75),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('-₱${amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        color: Color(0xFFF87171), fontSize: 14)),
+                Text(
+                  '-₱${amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Color(0xFFF87171),
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                const Text('swipe to delete',
-                    style: TextStyle(
-                        color: Color(0xFF4A5A50), fontSize: 10)),
+                const Text(
+                  'swipe to delete',
+                  style: TextStyle(color: Color(0xFF4A5A50), fontSize: 10),
+                ),
               ],
             ),
           ],
@@ -764,23 +861,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) =>
-                      ManageMoneyScreen(userId: _user!.uid)),
+                builder: (_) => ManageMoneyScreen(userId: _user!.uid),
+              ),
             );
           }),
           _navItem(Icons.history, 'History', false, () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) => HistoryScreen(userId: _user!.uid)),
+                builder: (_) => HistoryScreen(userId: _user!.uid),
+              ),
             );
           }),
           _navItem(Icons.person_outline, 'Me', false, () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) =>
-                      ProfileScreen(userId: _user!.uid)),
+                builder: (_) => ProfileScreen(userId: _user!.uid),
+              ),
             );
           }),
         ],
@@ -789,24 +887,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _navItem(
-      IconData icon, String label, bool active, VoidCallback onTap) {
+    IconData icon,
+    String label,
+    bool active,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              color: active
-                  ? const Color(0xFF3DDB6F)
-                  : const Color(0xFF6B7C75),
-              size: 24),
+          Icon(
+            icon,
+            color: active ? const Color(0xFF3DDB6F) : const Color(0xFF6B7C75),
+            size: 24,
+          ),
           const SizedBox(height: 4),
-          Text(label,
-              style: TextStyle(
-                  color: active
-                      ? const Color(0xFF3DDB6F)
-                      : const Color(0xFF6B7C75),
-                  fontSize: 11)),
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? const Color(0xFF3DDB6F) : const Color(0xFF6B7C75),
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );

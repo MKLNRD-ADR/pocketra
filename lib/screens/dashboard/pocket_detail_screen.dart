@@ -96,10 +96,13 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: () async {
+                onPressed: () {
                   if (amountController.text.isNotEmpty) {
                     final amount = double.parse(amountController.text);
-                    await _firestoreService
+
+                    Navigator.pop(context);
+
+                    _firestoreService
                         .addTransaction(widget.userId, widget.pocketId, {
                           'title': noteController.text.isEmpty
                               ? 'New Expense'
@@ -109,9 +112,6 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                           'userId': widget.userId,
                           'createdAt': DateTime.now().toIso8601String(),
                         });
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -341,10 +341,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                         // History header — plain Text, no "All Activity" button
                         const Text(
                           'History',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 17),
                         ),
 
                         const SizedBox(height: 8),
@@ -448,8 +445,12 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
   }
 
   // Swipe to delete — restores money to pocket and total
-  Widget _transactionTile(String txId, String title,
-      String subtitle, double amount) {
+  Widget _transactionTile(
+    String txId,
+    String title,
+    String subtitle,
+    double amount,
+  ) {
     return Dismissible(
       key: Key(txId),
       direction: DismissDirection.endToStart,
@@ -461,8 +462,7 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
           borderRadius: BorderRadius.circular(14),
         ),
         alignment: Alignment.centerRight,
-        child: const Icon(Icons.delete_outline,
-            color: Colors.white, size: 22),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 22),
       ),
       confirmDismiss: (direction) async {
         bool confirm = false;
@@ -473,21 +473,24 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text('Delete Transaction',
-                style: TextStyle(color: Colors.white)),
+            title: const Text(
+              'Delete Transaction',
+              style: TextStyle(color: Colors.white),
+            ),
             content: Text(
-                'Delete "$title"?\n\nThis amount will be removed from this section\'s spent total. Your total money will not change.',
-                style: const TextStyle(
-                    color: Color(0xFF6B7C75),
-                    height: 1.5)),
+              'Delete "$title"?\n\nThis amount will be removed from this section\'s spent total. Your total money will not change.',
+              style: const TextStyle(color: Color(0xFF6B7C75), height: 1.5),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   confirm = false;
                   Navigator.pop(context);
                 },
-                child: const Text('Cancel',
-                    style: TextStyle(color: Color(0xFF6B7C75))),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xFF6B7C75)),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -533,34 +536,47 @@ class _PocketDetailScreenState extends State<PocketDetailScreen> {
                 color: const Color(0xFF2A3A2F),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.receipt_outlined,
-                  color: Color(0xFF6B7C75), size: 18),
+              child: const Icon(
+                Icons.receipt_outlined,
+                color: Color(0xFF6B7C75),
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 14)),
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          color: Color(0xFF6B7C75), fontSize: 12)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7C75),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('-₱${amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        color: Color(0xFFF87171), fontSize: 14)),
+                Text(
+                  '-₱${amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Color(0xFFF87171),
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                const Text('swipe to delete',
-                    style: TextStyle(
-                        color: Color(0xFF4A5A50), fontSize: 10)),
+                const Text(
+                  'swipe to delete',
+                  style: TextStyle(color: Color(0xFF4A5A50), fontSize: 10),
+                ),
               ],
             ),
           ],

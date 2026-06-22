@@ -77,25 +77,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextStyle(color: Color(0xFF6B7C75))),
           ),
           ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.trim().isNotEmpty) {
-                // ✅ Update Firestore
-                await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(widget.userId)
-                    .update({
-                  'name': nameController.text.trim(),
-                });
-                // ✅ Update Firebase Auth display name
-                await _user?.updateDisplayName(
-                    nameController.text.trim());
-                // ✅ Reload user so changes reflect
-                await _user?.reload();
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              }
-            },
+            onPressed: () {
+  if (nameController.text.trim().isNotEmpty) {
+    final newName = nameController.text.trim();
+
+    // ✅ Close dialog first
+    Navigator.pop(context);
+
+    // ✅ Write to Firestore in background
+    // Works offline — syncs when internet returns
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .update({'name': newName});
+
+    // ✅ Update Firebase Auth display name
+    // This may fail offline but that's okay
+    // Firestore stream will show correct name
+    _user?.updateDisplayName(newName);
+  }
+},
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3DDB6F),
               foregroundColor: Colors.black,
